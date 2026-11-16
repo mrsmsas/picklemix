@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PickleMix</title>
+<meta name="description" content="Penjana perlawanan pickleball yang adil — beregu, perseorangan & beregu campuran.">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PickleMix">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+:root{
+  --bg:#eef4f1;--card:#ffffff;--ink:#10201a;--mut:#5b6b64;--line:#dbe5e0;
+  --pri:#0f766e;--pri-ink:#ffffff;--pri-soft:#d5f0ea;--ball:#e9e21b;--ball-ink:#2b2a00;
+  --danger:#c2410c;--l:#2563eb;--p:#db2777;--shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1310;--card:#15201c;--ink:#e5efe9;--mut:#93a59c;--line:#26352f;
+  --pri:#2dd4bf;--pri-ink:#062b26;--pri-soft:#123a34;--ball:#e9e21b;--ball-ink:#2b2a00;
+  --danger:#fb923c;--l:#60a5fa;--p:#f472b6;--shadow:none}}
+:root[data-theme="dark"]{--bg:#0b1310;--card:#15201c;--ink:#e5efe9;--mut:#93a59c;--line:#26352f;
+  --pri:#2dd4bf;--pri-ink:#062b26;--pri-soft:#123a34;--danger:#fb923c;--l:#60a5fa;--p:#f472b6;--shadow:none}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+#app{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.bar{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;
+  padding:calc(10px + env(safe-area-inset-top)) 12px 10px;background:var(--pri);color:var(--pri-ink)}
+.bar h1{margin:0;font-size:18px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar h1 small{display:block;font-size:12px;font-weight:500;opacity:.85}
+.ic{width:40px;height:40px;border:0;border-radius:12px;background:rgba(255,255,255,.14);font-size:22px;line-height:1;color:inherit}
+main{flex:1;padding:14px 16px 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.lbl{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.hint{color:var(--mut);font-size:13px;margin:10px 0 0}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hrow .lbl{margin:0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);padding:4px;border-radius:12px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:9px 4px;font-size:13px;font-weight:600;color:var(--mut)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow);outline:1px solid var(--line)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.step button{width:44px;height:44px;border:0;background:var(--bg);font-size:20px;font-weight:700}
+.step b{flex:1;text-align:center;font-size:18px}
+.plist{display:grid;gap:6px;margin-top:10px}
+.prow{display:flex;align-items:center;gap:8px}
+.prow .num{width:26px;text-align:right;color:var(--mut);font-size:13px;font-variant-numeric:tabular-nums}
+.prow input,.inp{flex:1;min-width:0;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:var(--bg)}
+.prow input:focus,.inp:focus,select:focus{outline:2px solid var(--pri);outline-offset:-1px}
+.g{height:42px;min-width:52px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-weight:700;font-size:13px}
+.g.L{color:var(--l)} .g.P{color:var(--p)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 14px;font-weight:600}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.btn.ball{background:var(--ball);border-color:var(--ball);color:var(--ball-ink)}
+.btn.danger{color:var(--danger)}
+.btn.big{width:100%;padding:15px;font-size:16px;border-radius:14px}
+.btn:disabled{opacity:.4;cursor:default}
+.link{border:0;background:none;color:var(--pri);font-weight:600;padding:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:13px;font-weight:600}
+.chip button{border:0;background:none;padding:0 0 0 2px;color:var(--mut);font-size:15px;line-height:1}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.L{background:var(--l)} .dot.P{background:var(--p)}
+.lockadd{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-top:10px}
+select{height:42px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:0 8px;min-width:0}
+/* game */
+.rnav{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;margin-bottom:12px}
+.rnav button{height:48px;border:1px solid var(--line);background:var(--card);border-radius:14px;font-size:22px}
+.rnav button:disabled{opacity:.3}
+.rnav div{text-align:center}
+.rnav b{display:block;font-size:22px}
+.rnav small{color:var(--mut)}
+.court{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.ctitle{display:flex;justify-content:space-between;padding:8px 14px;background:var(--pri-soft);font-weight:700;font-size:13px;letter-spacing:.03em;color:var(--pri)}
+.teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:14px}
+.team{display:grid;gap:4px;text-align:center}
+.team span{font-weight:700;font-size:17px;word-break:break-word}
+.vs{width:36px;height:36px;border-radius:50%;background:var(--ball);color:var(--ball-ink);display:grid;place-items:center;font-weight:800;font-size:12px}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+.acts .btn{padding:11px 4px;font-size:13px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tg{position:relative;width:48px;height:28px;flex:none}
+.tg input{opacity:0;width:0;height:0}
+.tg span{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:.2s}
+.tg span:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tg input:checked+span{background:var(--pri)}
+.tg input:checked+span:before{transform:translateX(20px)}
+.notice{background:var(--pri-soft);border:1px solid var(--pri);border-radius:14px;padding:12px;margin-bottom:12px;font-size:14px}
+.notice .btn{margin-top:8px;width:100%}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.dock .in{max-width:640px;margin:0 auto}
+.dock .cta{padding:10px 16px 0}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr)}
+.tabs button{border:0;background:none;padding:8px 0 10px;font-size:12px;font-weight:600;color:var(--mut)}
+.tabs button i{display:block;font-style:normal;font-size:20px}
+.tabs button.on{color:var(--pri)}
+/* stats */
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.kpi{background:var(--bg);border-radius:12px;padding:10px}
+.kpi b{display:block;font-size:20px}
+.kpi small{color:var(--mut);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 4px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+tr.pl{cursor:pointer}
+tr.det td{text-align:left;font-size:13px;color:var(--mut);background:var(--bg)}
+.off{opacity:.45;text-decoration:line-through}
+/* home */
+.hero{padding:26px 16px 8px;text-align:center}
+.logo{width:72px;height:72px;margin:0 auto 8px}
+.hero h2{margin:0;font-size:26px}
+.hero p{margin:4px 0 0;color:var(--mut)}
+.sess{display:flex;align-items:center;gap:10px}
+.sess .t{flex:1;min-width:0}
+.sess .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sess .t small{color:var(--mut)}
+.empty{text-align:center;color:var(--mut);padding:18px 0}
+.foot{text-align:center;color:var(--mut);font-size:12px;padding:8px 0 20px}
+/* modal & toast */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto}
+.sheet h3{margin:0 0 8px}
+.mbody{color:var(--mut);font-size:14px}
+.mbody ul{padding-left:18px;margin:8px 0}
+.mbtns{display:grid;gap:8px;margin-top:14px}
+.toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:90vw;text-align:center}
+@media (min-width:520px){.modal{align-items:center}.sheet{border-radius:20px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* ============ Data & storage ============ */
+const LS = 'picklemix_v1';
+const MODES = {doubles:'Beregu', singles:'Perseorangan', mixed:'Beregu Campuran'};
+const CANDIDATES = 150;
+let db = {sessions:[], settings:{autoAnnounce:false}};
+try { const raw = localStorage.getItem(LS); if (raw) db = Object.assign(db, JSON.parse(raw)); } catch(e) {}
+let S = null;                 // sesi semasa
+let draft = null;             // draf sesi baharu
+let view = {screen:'home', tab:'match', ri:0, open:null};
+
+const app = document.getElementById('app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const pk = (a, b) => a < b ? a + '|' + b : b + '|' + a;
+const qk = ids => [...ids].sort().join('|');
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function save(){
+  if (S) {
+    S.updated = Date.now();
+    const i = db.sessions.findIndex(x => x.id === S.id);
+    if (i < 0) db.sessions.unshift(S); else db.sessions[i] = S;
+  }
+  try { localStorage.setItem(LS, JSON.stringify(db)); } catch(e) {}
+}
+const perCourt = mode => mode === 'singles' ? 2 : 4;
+function capacity(mode, courts, n){
+  const per = perCourt(mode), used = Math.min(courts, Math.floor(n / per));
+  return {per, used, playing: used * per, rest: n - used * per, spare: courts - used};
+}
+
+/* ============ Statistik sejarah ============ */
+function bump(st, id, f, o){ const s = st[id]; if (s) s[f][o] = (s[f][o] || 0) + 1; }
+function computeStats(sess, upto){
+  const st = {};
+  sess.players.forEach(p => st[p.id] = {played:0, rests:0, eligible:0, partners:{}, opps:{}});
+  const partner = {}, opp = {}, quad = {}, restPair = {};
+  let lastRest = new Set(), lastPartner = new Set(), lastOpp = new Set(), b2b = 0;
+  sess.rounds.slice(0, upto).forEach(r => {
+    const lp = new Set(), lo = new Set();
+    r.courts.forEach(c => {
+      const all = [...c.a, ...c.b];
+      all.forEach(id => { const s = st[id]; if (s) { s.played++; s.eligible++; } });
+      [c.a, c.b].forEach(t => { if (t.length === 2) {
+        const k = pk(t[0], t[1]); partner[k] = (partner[k] || 0) + 1; lp.add(k);
+        bump(st, t[0], 'partners', t[1]); bump(st, t[1], 'partners', t[0]);
+      }});
+      c.a.forEach(x => c.b.forEach(y => { const k = pk(x, y); opp[k] = (opp[k] || 0) + 1; lo.add(k);
+        bump(st, x, 'opps', y); bump(st, y, 'opps', x); }));
+      if (all.length === 4) { const k = qk(all); quad[k] = (quad[k] || 0) + 1; }
+    });
+    r.rest.forEach(id => { const s = st[id]; if (s) { s.rests++; s.eligible++; } if (lastRest.has(id)) b2b++; });
+    for (let i = 0; i < r.rest.length; i++) for (let j = i + 1; j < r.rest.length; j++) {
+      const k = pk(r.rest[i], r.rest[j]); restPair[k] = (restPair[k] || 0) + 1; }
+    lastRest = new Set(r.rest); lastPartner = lp; lastOpp = lo;
+  });
+  return {st, partner, opp, quad, restPair, lastRest, lastPartner, lastOpp, b2b};
+}
+
+/* ============ Enjin padanan (150 calon, pilih skor terbaik) ============ */
+function greedyPair(list, cost){
+  const pool = [...list], out = [];
+  while (pool.length >= 2) {
+    const x = pool.shift();
+    let bi = 0, bc = Infinity;
+    pool.forEach((y, i) => { const c = cost(x, y) + Math.random() * 2; if (c < bc) { bc = c; bi = i; } });
+    out.push([x, pool.splice(bi, 1)[0]]);
+  }
+  return out;
+}
+
+function generate(sess, upto){
+  const T = computeStats(sess, upto);
+  const act = sess.players.filter(p => p.active);
+  const cap = capacity(sess.mode, sess.courts, act.length);
+  if (cap.used < 1) return null;
+  const per = cap.per, mixed = sess.mode === 'mixed';
+  const gOf = {}; act.forEach(p => gOf[p.id] = p.g);
+  const actSet = new Set(act.map(p => p.id));
+  const locks = per === 2 ? [] : sess.locks.filter(l => actSet.has(l[0]) && actSet.has(l[1]));
+  const lockedSet = new Set(locks.map(l => pk(l[0], l[1])));
+  const lockedIds = new Set(locks.flat());
+  const units = [...locks.map(l => ({ids:[...l], lock:true})),
+                 ...act.filter(p => !lockedIds.has(p.id)).map(p => ({ids:[p.id]}))];
+  const known = act.map(p => T.st[p.id]).filter(s => s.eligible > 0).map(s => s.played / s.eligible);
+  const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 1;
+  const ratio = id => { const s = T.st[id]; return s.eligible ? s.played / s.eligible : avg; };
+  // Jika yang berehat >= yang bermain (cth. 8 pemain, 1 gelanggang), peraturan "tiada rehat
+  // berturut-turut" yang ketat akan mengunci dua kumpulan sama bergilir. Longgarkan supaya semua bertemu.
+  const soft = cap.rest >= cap.playing;
+  const B2B_PR = soft ? 0.25 : 5, B2B_SC = soft ? 12 : 500;
+
+  let best = null, bestSc = Infinity;
+  for (let it = 0; it < CANDIDATES; it++) {
+    // 1) Pilih siapa berehat: yang paling banyak bermain berehat dulu; yang baru rehat mesti main
+    const ord = units.map(u => ({u, pr: u.ids.reduce((a, id) => a + ratio(id), 0) / u.ids.length
+        + Math.random() * 0.3 - (u.ids.some(id => T.lastRest.has(id)) ? B2B_PR : 0)}))
+      .sort((a, b) => b.pr - a.pr);
+    const rest = [], play = []; let need = cap.rest;
+    for (const o of ord) {
+      if (o.u.ids.length <= need) { rest.push(...o.u.ids); need -= o.u.ids.length; } else play.push(o.u);
+    }
+    if (need > 0) { // hanya pasangan tetap yang tinggal — pecahkan satu
+      const i = play.findIndex(u => u.lock);
+      if (i >= 0) { const u = play.splice(i, 1)[0]; rest.push(u.ids[0]); play.push({ids:[u.ids[1]]}); }
+    }
+    // 2) Bentuk pasukan & gelanggang
+    let courts;
+    if (per === 2) {
+      const pool = shuffle(play.flatMap(u => u.ids));
+      courts = greedyPair(pool, (x, y) => { const k = pk(x, y); return (T.opp[k] || 0) * 10 + (T.lastOpp.has(k) ? 20 : 0); })
+        .map(([x, y]) => ({a:[x], b:[y]}));
+    } else {
+      const teams = play.filter(u => u.lock).map(u => [...u.ids]);
+      const pool = shuffle(play.filter(u => !u.lock).flatMap(u => u.ids));
+      teams.push(...greedyPair(pool, (x, y) => {
+        const k = pk(x, y);
+        let c = (T.partner[k] || 0) * 12 + (T.lastPartner.has(k) ? 40 : 0);
+        if (mixed && gOf[x] === gOf[y]) c += 30;
+        return c;
+      }));
+      shuffle(teams);
+      courts = greedyPair(teams.map((t, i) => i), (i, j) => {
+        let c = 0;
+        teams[i].forEach(x => teams[j].forEach(y => { const k = pk(x, y); c += (T.opp[k] || 0) * 3 + (T.lastOpp.has(k) ? 5 : 0); }));
+        return c + (T.quad[qk([...teams[i], ...teams[j]])] || 0) * 25;
+      }).map(([i, j]) => ({a:teams[i], b:teams[j]}));
+    }
+    // 3) Skor keadilan (lebih rendah lebih baik)
+    let sc = 0;
+    rest.forEach(id => { if (T.lastRest.has(id)) sc += B2B_SC; sc += (1 - ratio(id)) * 30; });
+    for (let i = 0; i < rest.length; i++) for (let j = i + 1; j < rest.length; j++) {
+      const k = pk(rest[i], rest[j]); sc += (T.restPair[k] || 0) * 4; }
+    courts.forEach(c => {
+      [c.a, c.b].forEach(t => { if (t.length === 2) {
+        const k = pk(t[0], t[1]), n = T.partner[k] || 0;
+        if (!lockedSet.has(k)) sc += n * n * 10 + (T.lastPartner.has(k) ? 40 : 0);
+        if (mixed && gOf[t[0]] === gOf[t[1]] && !lockedSet.has(k)) sc += 30;
+      }});
+      c.a.forEach(x => c.b.forEach(y => { const k = pk(x, y), n = T.opp[k] || 0;
+        sc += n * (per === 2 ? 10 : 3) + (T.lastOpp.has(k) ? (per === 2 ? 20 : 5) : 0); }));
+      if (per === 4) sc += (T.quad[qk([...c.a, ...c.b])] || 0) * 25;
+    });
+    if (sc < bestSc) { bestSc = sc; best = {courts, rest}; }
+  }
+  return {courts: best.courts, rest: best.rest, ts: Date.now()};
+}
+
+/* ============ Helper UI ============ */
+function nameMap(){ const m = {}; (S ? S.players : []).forEach(p => m[p.id] = p.name); return m; }
+function toast(msg){
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+}
+function modal(title, body, btns){
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><h3>${title}</h3><div class="mbody">${body}</div><div class="mbtns"></div></div>`;
+  btns.forEach(b => { const e = document.createElement('button'); e.className = 'btn big ' + (b.cls || ''); e.textContent = b.t;
+    e.onclick = () => { m.remove(); b.fn && b.fn(); }; m.querySelector('.mbtns').appendChild(e); });
+  m.onclick = e => { if (e.target === m) m.remove(); };
+  document.body.appendChild(m);
+}
+function stepper(fn, val){ return `<div class="step"><button aria-label="Kurang" onclick="${fn}(-1)">−</button><b>${val}</b><button aria-label="Tambah" onclick="${fn}(1)">+</button></div>`; }
+function toggle(checked, fn){ return `<label class="tg"><input type="checkbox" ${checked ? 'checked' : ''} onchange="${fn}(this.checked)"><span></span></label>`; }
+function capHint(mode, courts, n){
+  const c = capacity(mode, courts, n);
+  if (c.used < 1) return `⚠️ Perlu sekurang-kurangnya ${c.per} pemain.`;
+  return `${c.used} gelanggang digunakan · ${c.playing} bermain · ${c.rest} berehat setiap pusingan` +
+    (c.spare > 0 ? ` · ${c.spare} gelanggang tidak cukup pemain` : '');
+}
+function go(screen){ view.screen = screen; if (screen === 'home') { S = null; speechCancel(); } render(); window.scrollTo(0, 0); }
+function fmtDate(ts){ return new Date(ts).toLocaleString('ms-MY', {day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit'}); }
+
+/* ============ Laman utama ============ */
+function renderHome(){
+  const list = [...db.sessions].sort((a, b) => b.updated - a.updated);
+  app.innerHTML = `
+  <div class="hero">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e9e21b"/>
+      ${[[20,20],[32,16],[44,20],[16,32],[28,30],[40,30],[48,34],[22,44],[34,44],[44,46],[32,54]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.2" fill="#b7ad00"/>`).join('')}</svg>
+    <h2>PickleMix</h2>
+    <p>Penjana perlawanan pickleball yang adil</p>
+  </div>
+  <main>
+    <button class="btn primary big" onclick="newDraft()">＋ Sesi Baharu</button>
+    <div style="height:12px"></div>
+    <section class="card sw">
+      <div><b>Umum automatik</b><div class="hint" style="margin:2px 0 0">Baca padanan setiap pusingan baharu dengan suara</div></div>
+      ${toggle(db.settings.autoAnnounce, 'setAuto')}
+    </section>
+    <section class="card">
+      <span class="lbl">Sejarah sesi</span>
+      ${list.length ? list.map(s => `
+        <div class="sess" style="padding:8px 0;border-top:1px solid var(--line)">
+          <div class="t"><b>${esc(s.name)}</b><small>${MODES[s.mode]} · ${s.players.filter(p => p.active).length} pemain · ${s.rounds.length} pusingan</small></div>
+          <button class="btn" onclick="openSession('${s.id}')">Buka</button>
+          <button class="btn danger" aria-label="Padam" onclick="delSession('${s.id}')">🗑</button>
+        </div>`).join('') : `<div class="empty">Belum ada sesi. Tekan “Sesi Baharu” untuk bermula.</div>`}
+    </section>
+    <p class="foot">Tiada akaun diperlukan · Semua data disimpan dalam peranti ini sahaja</p>
+  </main>`;
+}
+function setAuto(v){ db.settings.autoAnnounce = v; save(); if (v) toast('Umum automatik dihidupkan'); }
+function openSession(id){ S = db.sessions.find(s => s.id === id); if (!S) return; view = {screen:'game', tab:'match', ri:S.rounds.length - 1, open:null}; render(); }
+function delSession(id){
+  const s = db.sessions.find(x => x.id === id);
+  modal('Padam sesi?', `“${esc(s.name)}” dan semua sejarah pusingannya akan dipadam dari peranti ini. Tindakan ini tidak boleh dibatalkan.`,
+    [{t:'Padam', cls:'danger', fn:() => { db.sessions = db.sessions.filter(x => x.id !== id); save(); render(); }}, {t:'Batal'}]);
+}
+
+/* ============ Persediaan sesi ============ */
+function defaultPlayers(n, mode){ return Array.from({length:n}, (_, i) => ({id:uid(), name:'P' + (i + 1), g: i % 2 ? 'P' : 'L', active:true})); }
+function newDraft(){ draft = {mode:'doubles', courts:2, players:defaultPlayers(8), locks:[]}; view.screen = 'setup'; render(); }
+function setMode(m){ draft.mode = m; if (m === 'singles') draft.locks = []; render(); }
+function stepCourts(d){ draft.courts = Math.max(1, Math.min(8, draft.courts + d)); render(); }
+function stepCount(d){
+  const n = Math.max(4, Math.min(40, draft.players.length + d));
+  while (draft.players.length < n) { const i = draft.players.length; draft.players.push({id:uid(), name:'P' + (i + 1), g: i % 2 ? 'P' : 'L', active:true}); }
+  if (draft.players.length > n) {
+    const removed = new Set(draft.players.slice(n).map(p => p.id));
+    draft.players.length = n;
+    draft.locks = draft.locks.filter(l => !removed.has(l[0]) && !removed.has(l[1]));
+  }
+  render();
+}
+function resetNames(){ draft.players.forEach((p, i) => p.name = 'P' + (i + 1)); render(); }
+function renameDraft(i, v){
+  draft.players[i].name = v;
+  document.querySelectorAll(`option[value="${draft.players[i].id}"]`).forEach(o => o.textContent = v || ('P' + (i + 1)));
+  document.querySelectorAll(`[data-pn="${draft.players[i].id}"]`).forEach(o => o.textContent = v || ('P' + (i + 1)));
+}
+function toggleG(ctx, id){ const p = (ctx === 'draft' ? draft : S).players.find(x => x.id === id); p.g = p.g === 'L' ? 'P' : 'L'; if (ctx === 'S') markDirty(); else render(); }
+function gBtn(ctx, p){ return `<button class="g ${p.g}" onclick="toggleG('${ctx}','${p.id}')" title="Jantina">${p.g === 'L' ? '♂ L' : '♀ P'}</button>`; }
+
+function locksHTML(ctx){
+  const src = ctx === 'draft' ? draft : S;
+  const players = src.players.filter(p => p.active);
+  const lockedIds = new Set(src.locks.flat());
+  const free = players.filter(p => !lockedIds.has(p.id));
+  const nm = id => (src.players.find(p => p.id === id) || {}).name || '?';
+  const opts = free.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  return `<section class="card">
+    <span class="lbl">Pasangan tetap 🔒</span>
+    <div class="hint" style="margin:0">Pasangan ini sentiasa bermain dalam pasukan yang sama (contoh: suami isteri, jurulatih & pelajar).</div>
+    <div class="chips">${src.locks.length ? src.locks.map((l, i) => `<span class="chip">🔒 <span data-pn="${l[0]}">${esc(nm(l[0]))}</span> & <span data-pn="${l[1]}">${esc(nm(l[1]))}</span><button aria-label="Buang" onclick="delLock('${ctx}',${i})">✕</button></span>`).join('') : '<span class="hint" style="margin:0">Tiada pasangan tetap.</span>'}</div>
+    ${free.length >= 2 ? `<div class="lockadd"><select id="lk1-${ctx}" aria-label="Pemain pertama">${opts}</select><select id="lk2-${ctx}" aria-label="Pemain kedua">${opts}</select><button class="btn" onclick="addLock('${ctx}')">Kunci</button></div>` : ''}
+  </section>`;
+}
+function addLock(ctx){
+  const a = document.getElementById('lk1-' + ctx).value, b = document.getElementById('lk2-' + ctx).value;
+  if (a === b) return toast('Pilih dua pemain berbeza');
+  (ctx === 'draft' ? draft : S).locks.push([a, b]);
+  if (ctx === 'S') markDirty(); else render();
+}
+function delLock(ctx, i){ (ctx === 'draft' ? draft : S).locks.splice(i, 1); if (ctx === 'S') markDirty(); else render(); }
+
+function renderSetup(){
+  const d = draft;
+  app.innerHTML = `
+  <header class="bar"><button class="ic" aria-label="Kembali" onclick="go('home')">‹</button><h1>Sesi Baharu</h1><span></span></header>
+  <main>
+    <section class="card">
+      <span class="lbl">Mod permainan</span>
+      <div class="seg">${Object.entries(MODES).map(([k, v]) => `<button class="${d.mode === k ? 'on' : ''}" onclick="setMode('${k}')">${v}</button>`).join('')}</div>
+      <div class="row2">
+        <div><span class="lbl">Gelanggang</span>${stepper('stepCourts', d.courts)}</div>
+        <div><span class="lbl">Pemain</span>${stepper('stepCount', d.players.length)}</div>
+      </div>
+      <p class="hint">${capHint(d.mode, d.courts, d.players.length)}</p>
+    </section>
+    <section class="card">
+      <div class="hrow"><span class="lbl">Nama pemain</span><button class="link" onclick="resetNames()">Set semula</button></div>
+      ${d.mode === 'mixed' ? '<div class="hint" style="margin:4px 0 0">Tekan butang L/P untuk tetapkan jantina.</div>' : ''}
+      <div class="plist">${d.players.map((p, i) => `<div class="prow"><span class="num">${i + 1}</span>
+        <input value="${esc(p.name)}" aria-label="Nama pemain ${i + 1}" oninput="renameDraft(${i},this.value)" onfocus="this.select()">
+        ${d.mode === 'mixed' ? gBtn('draft', p) : ''}</div>`).join('')}</div>
+    </section>
+    ${d.mode !== 'singles' ? locksHTML('draft') : ''}
+    <button class="btn primary big" onclick="startSession()">Mula Sesi ▶</button>
+  </main>`;
+}
+function startSession(){
+  const d = draft;
+  d.players.forEach((p, i) => { p.name = (p.name || '').trim() || ('P' + (i + 1)); });
+  if (capacity(d.mode, d.courts, d.players.length).used < 1) return toast('Pemain tidak mencukupi');
+  S = {id:uid(), name:'Sesi ' + fmtDate(Date.now()), created:Date.now(), updated:Date.now(),
+       mode:d.mode, courts:d.courts, players:d.players.map(p => ({...p, joined:0})), locks:d.locks.map(l => [...l]), rounds:[], dirty:false};
+  S.rounds.push(generate(S, 0));
+  save();
+  view = {screen:'game', tab:'match', ri:0, open:null};
+  render(); autoAnnounce();
+}
+
+/* ============ Skrin permainan ============ */
+function renderGame(){
+  const t = view.tab;
+  const body = t === 'match' ? matchTab() : t === 'stats' ? statsTab() : membersTab();
+  const last = view.ri === S.rounds.length - 1;
+  app.innerHTML = `
+  <header class="bar"><button class="ic" aria-label="Laman utama" onclick="go('home')">‹</button>
+    <h1>${esc(S.name)}<small>${MODES[S.mode]} · ${S.players.filter(p => p.active).length} pemain · ${S.courts} gelanggang</small></h1><span></span></header>
+  <main id="main" style="padding-bottom:${t === 'match' ? 170 : 100}px">${body}</main>
+  <nav class="dock"><div class="in">
+    ${t === 'match' ? `<div class="cta">${last
+      ? `<button class="btn primary big" onclick="nextRound()">Pusingan Seterusnya ▶</button>`
+      : `<button class="btn big" onclick="view.ri=S.rounds.length-1;render()">Ke Pusingan Terkini (${S.rounds.length}) ⏭</button>`}</div>` : ''}
+    <div class="tabs">
+      ${[['match', '🏓', 'Perlawanan'], ['stats', '📊', 'Statistik'], ['members', '👥', 'Ahli']].map(([k, i, l]) =>
+        `<button class="${t === k ? 'on' : ''}" onclick="view.tab='${k}';render();window.scrollTo(0,0)"><i>${i}</i>${l}</button>`).join('')}
+    </div></div></nav>`;
+  if (t === 'match') attachSwipe();
+}
+
+function matchTab(){
+  const r = S.rounds[view.ri], nm = nameMap(), last = view.ri === S.rounds.length - 1;
+  const lockSet = new Set(S.locks.map(l => pk(l[0], l[1])));
+  const team = t => `<div class="team">${t.map(id => `<span>${esc(nm[id])}</span>`).join('')}${t.length === 2 && lockSet.has(pk(t[0], t[1])) ? '<small class="hint" style="margin:0">🔒 tetap</small>' : ''}</div>`;
+  return `
+  ${S.dirty && last ? `<div class="notice">✏️ Perubahan ahli/gelanggang disimpan dan akan digunakan mulai pusingan seterusnya.
+     <button class="btn" onclick="confirmRegen()">Atau jana semula pusingan ${view.ri + 1} sekarang</button></div>` : ''}
+  <div class="rnav">
+    <button aria-label="Pusingan sebelum" onclick="nav(-1)" ${view.ri === 0 ? 'disabled' : ''}>‹</button>
+    <div><b>Pusingan ${view.ri + 1}</b><small>${last ? 'Terkini' : 'Sejarah'} · daripada ${S.rounds.length}</small></div>
+    <button aria-label="Pusingan seterusnya" onclick="nav(1)" ${last ? 'disabled' : ''}>›</button>
+  </div>
+  ${r.courts.map((c, i) => `<div class="court"><div class="ctitle"><span>GELANGGANG ${i + 1}</span></div>
+     <div class="teams">${team(c.a)}<div class="vs">VS</div>${team(c.b)}</div></div>`).join('')}
+  <section class="card">
+    <span class="lbl">Berehat (${r.rest.length})</span>
+    ${r.rest.length ? `<div class="chips">${r.rest.map(id => `<span class="chip">☕ ${esc(nm[id])}</span>`).join('')}</div>` : '<div class="hint" style="margin:0">Semua pemain bermain pusingan ini.</div>'}
+  </section>
+  <div class="acts">
+    <button class="btn ball" onclick="announceRound()">🔊 Umum</button>
+    <button class="btn" onclick="shareRound()">📤 Kongsi</button>
+    <button class="btn" onclick="confirmRegen()" ${last ? '' : 'disabled'}>↻ Jana Semula</button>
+  </div>
+  <section class="card sw"><div><b>Umum automatik</b><div class="hint" style="margin:2px 0 0">Baca setiap pusingan baharu</div></div>${toggle(db.settings.autoAnnounce, 'setAutoGame')}</section>`;
+}
+function setAutoGame(v){ setAuto(v); }
+function nav(d){ const n = view.ri + d; if (n < 0 || n >= S.rounds.length) return; view.ri = n; render(); }
+function attachSwipe(){
+  const m = document.getElementById('main'); let x0 = null, y0 = null;
+  m.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive:true});
+  m.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) nav(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, {passive:true});
+}
+function nextRound(){
+  const r = generate(S, S.rounds.length);
+  if (!r) return toast('Pemain aktif tidak mencukupi');
+  S.rounds.push(r); S.dirty = false; view.ri = S.rounds.length - 1;
+  save(); render(); window.scrollTo(0, 0); autoAnnounce();
+}
+function roundLines(r){
+  const nm = nameMap();
+  return r.courts.map((c, i) => `G${i + 1}: ${c.a.map(id => nm[id]).join(' & ')}  vs  ${c.b.map(id => nm[id]).join(' & ')}`);
+}
+function confirmRegen(){
+  const i = S.rounds.length - 1;
+  modal(`Jana semula pusingan ${i + 1}?`,
+    `Padanan berikut akan dibuang dan diganti dengan susunan baharu (peraturan keadilan yang sama):<ul>${roundLines(S.rounds[i]).map(l => `<li>${esc(l)}</li>`).join('')}</ul>`,
+    [{t:'↻ Jana Semula', cls:'primary', fn:() => {
+      const r = generate(S, i); if (!r) return toast('Pemain aktif tidak mencukupi');
+      S.rounds[i] = r; S.dirty = false; view.ri = i; view.tab = 'match'; save(); render(); toast('Pusingan dijana semula'); autoAnnounce();
+    }}, {t:'Batal'}]);
+}
+async function shareRound(){
+  const r = S.rounds[view.ri], nm = nameMap();
+  const text = `🏓 ${S.name}\nPusingan ${view.ri + 1}\n\n${roundLines(r).join('\n')}\n\nBerehat: ${r.rest.length ? r.rest.map(id => nm[id]).join(', ') : '-'}`;
+  try { if (navigator.share) { await navigator.share({text}); return; } } catch(e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); toast('Disalin — tampal di WhatsApp'); }
+  catch(e) { modal('Salin padanan', `<textarea style="width:100%;height:180px" readonly>${esc(text)}</textarea>`, [{t:'Tutup'}]); }
+}
+
+/* ============ Pengumuman suara ============ */
+function speechCancel(){ try { speechSynthesis.cancel(); } catch(e) {} }
+function announceRound(){
+  if (!('speechSynthesis' in window)) return toast('Peranti ini tidak menyokong suara');
+  const r = S.rounds[view.ri], nm = nameMap();
+  const vs = S.mode === 'singles' ? ' lawan ' : ', lawan ';
+  let txt = `Pusingan ${view.ri + 1}. ` + r.courts.map((c, i) =>
+    `Gelanggang ${i + 1}: ${c.a.map(id => nm[id]).join(' dan ')}${vs}${c.b.map(id => nm[id]).join(' dan ')}.`).join(' ');
+  if (r.rest.length) txt += ` Berehat: ${r.rest.map(id => nm[id]).join(', ')}.`;
+  speechCancel();
+  const u = new SpeechSynthesisUtterance(txt);
+  const v = speechSynthesis.getVoices().find(v => /^ms/i.test(v.lang)) || speechSynthesis.getVoices().find(v => /^id/i.test(v.lang));
+  if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'ms-MY';
+  u.rate = 0.95;
+  speechSynthesis.speak(u);
+  toast('🔊 Mengumumkan… (semak kelantangan & mod senyap)');
+}
+function autoAnnounce(){ if (db.settings.autoAnnounce) setTimeout(announceRound, 300); }
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
+
+/* ============ Statistik ============ */
+function statsTab(){
+  const T = computeStats(S, S.rounds.length), nm = nameMap();
+  const seen = S.players.filter(p => p.active || T.st[p.id].eligible > 0);
+  const act = S.players.filter(p => p.active && T.st[p.id].eligible > 0);
+  const played = act.map(p => T.st[p.id].played);
+  const minP = played.length ? Math.min(...played) : 0, maxP = played.length ? Math.max(...played) : 0;
+  const rep = o => Object.values(o).reduce((a, n) => a + Math.max(0, n - 1), 0);
+  const lockSet = new Set(S.locks.map(l => pk(l[0], l[1])));
+  const partnerRep = Object.entries(T.partner).filter(([k]) => !lockSet.has(k)).reduce((a, [, n]) => a + Math.max(0, n - 1), 0);
+  const quadRep = rep(T.quad);
+  const n = act.length;
+  const possible = S.mode === 'singles' ? 0 : n * (n - 1) / 2;
+  const covered = Object.keys(T.partner).length;
+  const row = p => {
+    const s = T.st[p.id], open = view.open === p.id;
+    const list = o => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([id, c]) => `${esc(nm[id])}${c > 1 ? ' ×' + c : ''}`).join(', ') || '-';
+    return `<tr class="pl" onclick="view.open=view.open==='${p.id}'?null:'${p.id}';render()">
+        <td class="${p.active ? '' : 'off'}">${S.mode === 'mixed' ? `<span class="dot ${p.g}"></span> ` : ''}${esc(p.name)}</td>
+        <td>${s.played}</td><td>${s.rests}</td>${S.mode !== 'singles' ? `<td>${Object.keys(s.partners).length}</td>` : ''}<td>${Object.keys(s.opps).length}</td></tr>
+      ${open ? `<tr class="det"><td colspan="5">${S.mode !== 'singles' ? `<b>Rakan:</b> ${list(s.partners)}<br>` : ''}<b>Lawan:</b> ${list(s.opps)}</td></tr>` : ''}`;
+  };
+  return `
+  <section class="card">
+    <span class="lbl">Gambaran keadilan sesi</span>
+    <div class="kpis">
+      <div class="kpi"><b>${S.rounds.length}</b><small>Pusingan dimainkan</small></div>
+      <div class="kpi"><b>${minP}–${maxP}</b><small>Julat perlawanan setiap pemain${maxP - minP <= 1 ? ' ✅' : ''}</small></div>
+      <div class="kpi"><b>${T.b2b}</b><small>Rehat berturut-turut${T.b2b === 0 ? ' ✅' : ''}</small></div>
+      ${S.mode !== 'singles'
+        ? `<div class="kpi"><b>${partnerRep}</b><small>Ulangan rakan sepasukan</small></div>
+           <div class="kpi"><b>${covered}/${possible}</b><small>Gandingan rakan berbeza dicuba</small></div>
+           <div class="kpi"><b>${quadRep}</b><small>Ulangan 4 orang sama segelanggang</small></div>`
+        : `<div class="kpi"><b>${rep(T.opp)}</b><small>Ulangan lawan</small></div>`}
+    </div>
+  </section>
+  <section class="card">
+    <span class="lbl">Statistik pemain <span style="text-transform:none;font-weight:500">(tekan nama untuk butiran)</span></span>
+    <table><thead><tr><th>Nama</th><th>Main</th><th>Rehat</th>${S.mode !== 'singles' ? '<th>Rakan</th>' : ''}<th>Lawan</th></tr></thead>
+    <tbody>${seen.map(row).join('')}</tbody></table>
+  </section>`;
+}
+
+/* ============ Ahli (tambah/buang/nama semula pertengahan sesi) ============ */
+let newG = 'L';
+function markDirty(){ S.dirty = true; save(); render(); }
+function membersTab(){
+  const act = S.players.filter(p => p.active), out = S.players.filter(p => !p.active);
+  const prow = p => `<div class="prow">
+      ${S.mode === 'mixed' ? gBtn('S', p) : ''}
+      <input value="${esc(p.name)}" aria-label="Nama" onchange="renameS('${p.id}',this.value)" ${p.active ? '' : 'class="off"'}>
+      <button class="btn ${p.active ? 'danger' : ''}" style="min-width:86px" onclick="toggleActive('${p.id}')">${p.active ? 'Keluar' : 'Masuk'}</button></div>`;
+  return `
+  <section class="card">
+    <div class="row2" style="margin:0">
+      <div><span class="lbl">Gelanggang</span>${stepper('stepCourtsS', S.courts)}</div>
+      <div><span class="lbl">Mod</span><div style="padding:10px 0;font-weight:700">${MODES[S.mode]}</div></div>
+    </div>
+    <p class="hint">${capHint(S.mode, S.courts, act.length)}</p>
+  </section>
+  <section class="card">
+    <span class="lbl">Tambah pemain (datang lewat)</span>
+    <div class="prow">
+      ${S.mode === 'mixed' ? `<button class="g ${newG}" onclick="newG=newG==='L'?'P':'L';render()">${newG === 'L' ? '♂ L' : '♀ P'}</button>` : ''}
+      <input class="inp" id="newName" placeholder="Nama pemain" onkeydown="if(event.key==='Enter')addPlayer()">
+      <button class="btn primary" onclick="addPlayer()">Tambah</button>
+    </div>
+  </section>
+  <section class="card">
+    <span class="lbl">Pemain aktif (${act.length})</span>
+    <div class="plist">${act.map(prow).join('')}</div>
+    ${out.length ? `<span class="lbl" style="margin-top:16px">Telah keluar (${out.length})</span><div class="plist">${out.map(prow).join('')}</div>` : ''}
+    <p class="hint">Perubahan digunakan mulai pusingan seterusnya, atau jana semula pusingan semasa dari tab Perlawanan.</p>
+  </section>
+  ${S.mode !== 'singles' ? locksHTML('S') : ''}
+  <section class="card">
+    <span class="lbl">Nama sesi</span>
+    <input class="inp" style="width:100%" value="${esc(S.name)}" onchange="S.name=this.value.trim()||S.name;save();render()">
+  </section>`;
+}
+function stepCourtsS(d){ const v = Math.max(1, Math.min(8, S.courts + d)); if (v === S.courts) return; S.courts = v; markDirty(); }
+function renameS(id, v){ const p = S.players.find(x => x.id === id); v = v.trim(); if (!v) return render(); p.name = v; save(); render(); }
+function toggleActive(id){
+  const p = S.players.find(x => x.id === id);
+  if (!p.active && S.players.filter(x => x.active).length >= 40) return toast('Maksimum 40 pemain');
+  p.active = !p.active;
+  if (!p.active) S.locks = S.locks.filter(l => l[0] !== id && l[1] !== id);
+  markDirty(); toast(p.active ? `${p.name} masuk semula` : `${p.name} keluar`);
+}
+function addPlayer(){
+  const el = document.getElementById('newName');
+  if (S.players.filter(x => x.active).length >= 40) return toast('Maksimum 40 pemain');
+  const name = el.value.trim() || ('P' + (S.players.length + 1));
+  S.players.push({id:uid(), name, g:newG, active:true, joined:S.rounds.length});
+  markDirty(); toast(`${name} ditambah`);
+  setTimeout(() => { const e = document.getElementById('newName'); e && e.focus(); }, 0);
+}
+
+/* ============ Render ============ */
+function render(){
+  if (view.screen === 'setup') renderSetup();
+  else if (view.screen === 'game' && S) renderGame();
+  else { view.screen = 'home'; renderHome(); }
+}
+render();
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

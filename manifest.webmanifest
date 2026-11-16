@@ -1,0 +1,15 @@
+{
+  "name": "PickleMix — Penjana Perlawanan Pickleball",
+  "short_name": "PickleMix",
+  "description": "Penjana perlawanan pickleball yang adil: beregu, perseorangan & beregu campuran.",
+  "lang": "ms",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef4f1",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
