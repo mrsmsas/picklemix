@@ -5,24 +5,23 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PickleMix</title>
 <meta name="description" content="Penjana perlawanan pickleball yang adil — Mix & Match, Round Robin, Raja Gelanggang, dengan skor & kedudukan.">
-<meta name="theme-color" content="#0f766e">
+<meta name="theme-color" content="#0e121a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PickleMix">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
+/* Tema aplikasi: gelap + aksen limau (seperti aplikasi sukan di App Store / Play Store) */
 :root{
-  --bg:#eef4f1;--card:#ffffff;--ink:#10201a;--mut:#5b6b64;--line:#dbe5e0;
-  --pri:#0f766e;--pri-ink:#ffffff;--pri-soft:#d5f0ea;--ball:#e9e21b;--ball-ink:#2b2a00;
-  --danger:#c2410c;--warn:#b45309;--l:#2563eb;--p:#db2777;--gold:#b8860b;--shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.05);
+  color-scheme:dark;
+  --bg:#0e121a;--card:#1a202b;--card2:#232a37;--ink:#f3f5f8;--mut:#8a94a6;--line:#2a3242;
+  --pri:#d4f34a;--pri-ink:#12160a;--pri-soft:rgba(212,243,74,.12);--ball:#d4f34a;--ball-ink:#12160a;
+  --danger:#ff6b5b;--warn:#ffc35a;--l:#5aa9ff;--p:#ff6fae;--gold:#f5c542;--silver:#c0c7d2;--bronze:#d08a4e;--shadow:none;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0b1310;--card:#15201c;--ink:#e5efe9;--mut:#93a59c;--line:#26352f;
-  --pri:#2dd4bf;--pri-ink:#062b26;--pri-soft:#123a34;--ball:#e9e21b;--ball-ink:#2b2a00;
-  --danger:#fb923c;--warn:#fbbf24;--l:#60a5fa;--p:#f472b6;--gold:#facc15;--shadow:none}}
-:root[data-theme="dark"]{--bg:#0b1310;--card:#15201c;--ink:#e5efe9;--mut:#93a59c;--line:#26352f;
-  --pri:#2dd4bf;--pri-ink:#062b26;--pri-soft:#123a34;--danger:#fb923c;--warn:#fbbf24;--l:#60a5fa;--p:#f472b6;--gold:#facc15;--shadow:none}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button,input,select{font:inherit;color:inherit}
@@ -151,6 +150,43 @@ tr.det td{text-align:left;font-size:13px;color:var(--mut);background:var(--bg)}
 .mbox small{display:block;padding:3px 8px 6px;color:var(--mut);font-size:11px;border-top:1px solid var(--line)}
 .champ{text-align:center;border-color:var(--gold)}
 .champ b{display:block;font-size:22px;margin-top:2px}
+.tbig{font-size:52px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:.02em;margin:6px 0 10px;border-radius:14px}
+.tmr.low{color:var(--danger)}
+.tmr.zero{background:var(--danger);color:#fff;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.55}}
+/* papan TV */
+#app.wide{max-width:none}
+.tv{min-height:100vh;background:#08110e;color:#eef6f1;display:flex;flex-direction:column;padding:2vh 2vw;gap:2vh}
+.tvh{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:2vw}
+.tvh b{display:block;font-size:clamp(18px,2.4vw,40px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tvh span{color:#93a59c;font-size:clamp(12px,1.3vw,22px)}
+.tvr{font-weight:900;font-size:clamp(18px,2.6vw,46px);color:#e9e21b}
+.tvt{font-variant-numeric:tabular-nums;font-weight:900;font-size:clamp(36px,6vw,110px);line-height:1;padding:.08em .35em;border-radius:.2em;background:#15201c}
+.tvt.low{color:#fb923c}
+.tvbtn{white-space:nowrap}
+.tvbtn button{background:#15201c;border:1px solid #26352f;color:#eef6f1;border-radius:10px;font-size:clamp(14px,1.5vw,26px);padding:.35em .6em;margin-left:.3em}
+.tvbody{flex:1;display:grid;grid-template-columns:1fr minmax(220px,24vw);gap:2vw;min-height:0}
+.tvcourts{display:grid;gap:1.5vw;align-content:start}
+.tvc{background:#15201c;border:2px solid #26352f;border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.tvc.king{border-color:#facc15}
+.tvc .h{background:#123a34;color:#2dd4bf;font-weight:800;padding:.5em .8em;font-size:clamp(12px,1.3vw,24px);display:flex;justify-content:space-between;gap:1em}
+.tvc.king .h{color:#facc15}
+.tvc .m{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1vw;padding:1.6vw 1vw;flex:1}
+.tvc .t{text-align:center;font-weight:800;font-size:clamp(16px,2.2vw,46px);line-height:1.25;overflow-wrap:break-word;min-width:0}
+.tvc .t.win{color:#2dd4bf} .tvc .t.lose{opacity:.55}
+.tvc .s{font-size:clamp(20px,3vw,64px);font-weight:900;color:#e9e21b;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tvc .vs{width:clamp(36px,3.5vw,70px);height:clamp(36px,3.5vw,70px);font-size:clamp(12px,1.2vw,22px)}
+.tvside{display:flex;flex-direction:column;gap:1.5vw;min-height:0}
+.tvbox{background:#15201c;border-radius:16px;padding:1vw 1.2vw}
+.tvbox h3{margin:0 0 .5em;font-size:clamp(14px,1.4vw,26px);color:#93a59c}
+.tvbox .r{display:flex;justify-content:space-between;gap:1em;font-size:clamp(13px,1.3vw,24px);padding:.3em 0;border-bottom:1px solid #26352f}
+.tvbox .r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvrest{display:flex;flex-wrap:wrap;gap:.5vw}
+.tvrest span{background:#0b1310;border-radius:99px;padding:.3em .8em;font-size:clamp(12px,1.2vw,22px)}
+.tvfoot{margin-top:auto;color:#5b6b64;font-size:clamp(11px,1vw,18px);text-align:right}
+.tvover{position:fixed;inset:0;display:none;place-items:center;background:rgba(194,65,12,.88);font-size:clamp(48px,10vw,200px);font-weight:900;color:#fff;z-index:40;animation:blink 1s infinite;cursor:pointer;text-align:center}
+@media (max-width:800px){.tvbody{grid-template-columns:1fr}.tvh{grid-template-columns:1fr auto}.tvh>div:first-child{grid-column:1/-1}}
+@media (max-width:600px){.tvcourts{grid-template-columns:1fr !important}.tvc .t{font-size:20px}.tvh .tvbtn{grid-column:1/-1}}
 /* home */
 .hero{padding:26px 16px 8px;text-align:center}
 .logo{width:72px;height:72px;margin:0 auto 8px}
@@ -171,6 +207,133 @@ tr.det td{text-align:left;font-size:13px;color:var(--mut);background:var(--bg)}
 .mbtns{display:grid;gap:8px;margin-top:14px}
 .toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:90vw;text-align:center}
 @media (min-width:520px){.modal{align-items:center}.sheet{border-radius:20px}}
+
+/* ===== Tema v3: gaya aplikasi (gelap + limau) — peraturan di bawah mengatasi yang di atas ===== */
+html,body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.bar{background:rgba(14,18,26,.94);backdrop-filter:blur(12px);color:var(--ink);border-bottom:1px solid var(--line)}
+.bar h1{font-size:16px;font-weight:700}
+.bar h1 small{color:var(--mut);opacity:1;font-weight:500}
+.ic{background:var(--card);color:var(--ink);font-size:20px;border:1px solid var(--line)}
+.card{border-radius:20px;box-shadow:none}
+.lbl{font-weight:600;letter-spacing:.07em}
+.seg{background:var(--card2)}
+.seg button.on{background:var(--pri);color:var(--pri-ink);outline:0;box-shadow:none;font-weight:800}
+.step{background:var(--card2)} .step button{background:transparent;color:var(--pri)}
+.prow input,.inp,select{background:var(--card2)}
+.btn{background:var(--card2);border-radius:14px}
+.btn.primary,.btn.ball{background:var(--pri);border-color:var(--pri);color:var(--pri-ink);font-weight:800}
+.btn.danger{color:var(--danger)}
+.chip{background:var(--card2)}
+.notice{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--pri)}
+.dock{background:rgba(14,18,26,.94);backdrop-filter:blur(12px)}
+.tabs button{font-weight:600}
+.tabs button i{filter:grayscale(1);opacity:.7}
+.tabs button.on i{filter:none;opacity:1}
+.modal{background:rgba(0,0,0,.65)}
+.sheet{border:1px solid var(--line)}
+.toast{background:var(--pri);color:var(--pri-ink);font-weight:700}
+.vs{background:var(--card2);color:var(--mut);border:1px solid var(--line)}
+.tg span{background:var(--card2);border:1px solid var(--line)}
+.tg input:checked+span:before{background:var(--pri-ink)}
+.kpi,.prog,.mbox,.pod{background:var(--card2)}
+.team.win{background:var(--pri-soft)}
+.court.king{border-color:var(--gold)}
+/* cip pusingan */
+.rchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.rchips::-webkit-scrollbar{display:none}
+.rchips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px}
+.rchips button.on{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}
+.rtitle{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px 12px}
+.rtitle{flex-wrap:wrap;gap:4px 10px}
+.rtitle b{font-size:24px;font-weight:800;white-space:nowrap}
+.trow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.trow .tbig{font-size:42px;margin:2px 0 0;text-align:left;padding:0 6px;line-height:1.1}
+.tbtns{display:flex;gap:6px}
+.tbtns .btn{width:46px;height:46px;padding:0;font-size:17px}
+details summary{color:var(--mut);font-size:13px;font-weight:600;cursor:pointer;margin-top:8px}
+.rtitle small{color:var(--mut)}
+/* kad perlawanan */
+.court{border-radius:20px;box-shadow:none}
+.ctitle{background:transparent;color:var(--pri);font-size:11.5px;padding:12px 16px 0;letter-spacing:.08em;text-transform:uppercase}
+.ctitle span:last-child{color:var(--mut)}
+.court.king .ctitle span:first-child{color:var(--gold)}
+.mrow{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:12px 14px 14px}
+.side{display:grid;gap:8px;min-width:0}
+.side.r .pl{flex-direction:row-reverse;text-align:right}
+.pl{display:flex;align-items:center;gap:8px;min-width:0}
+.pl .nm{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;background:var(--card2);color:var(--ink);border:2px solid var(--line)}
+.av.L{border-color:var(--l);color:var(--l)} .av.P{border-color:var(--p);color:var(--p)}
+.side.win .nm{color:var(--pri)} .side.lose{opacity:.5}
+.side small{font-size:11px}
+.sbox{border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:8px 10px 6px;min-width:96px;font-weight:900;font-size:26px;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.1}
+.sbox small{display:block;font-size:9.5px;font-weight:800;color:var(--pri);letter-spacing:.08em;margin-top:3px}
+.sbox.empty{font-size:15px;color:var(--mut);padding:12px 10px 8px}
+/* papan kekunci skor */
+.kscore{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-top:12px}
+.kt{border:2px solid var(--line);background:var(--card2);border-radius:16px;padding:10px 8px;text-align:center;cursor:pointer;min-width:0}
+.kt.on{border-color:var(--pri)}
+.kt small{color:var(--mut);font-weight:700;font-size:10.5px;letter-spacing:.07em;display:block}
+.kt b{display:block;font-size:13px;margin:2px 0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kt .kn{font-size:42px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
+.kt.on .kn{color:var(--pri)}
+.kcolon{font-size:30px;font-weight:900;color:var(--mut)}
+.kstat{text-align:center;margin:10px 0 2px;font-weight:700;color:var(--pri);min-height:21px;font-size:14px}
+.kstat.warn{color:var(--warn)}
+.kgrid button{background:var(--card2);border-color:var(--line);color:var(--ink)}
+.kgrid button.on{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}
+/* kedudukan */
+.lb td{padding:10px 4px;vertical-align:middle}
+.lb .nm small{display:block;color:var(--mut);font-size:11px;font-weight:500}
+.rk{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--card2);font-size:12px;font-weight:800}
+.rk.r1{background:var(--gold);color:#1a1300} .rk.r2{background:var(--silver);color:#15181d} .rk.r3{background:var(--bronze);color:#1d1006}
+.lb th.pts,.lb td.pts{background:var(--pri-soft);color:var(--pri);font-weight:800;text-align:center}
+.winner{text-align:center;padding:18px;border-color:var(--pri)}
+.winner .cup{font-size:44px;line-height:1}
+.winner .t{font-size:12px;color:var(--mut);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.winner b{display:block;font-size:22px;margin-top:2px}
+.winner .h{font-weight:800;font-size:16px}
+/* wizard & pilihan */
+.wprog{height:4px;background:var(--card2);border-radius:99px;overflow:hidden;margin:12px 16px 0}
+.wprog i{display:block;height:100%;background:var(--pri);border-radius:99px;transition:width .3s}
+.wq{font-size:22px;font-weight:800;margin:4px 2px 14px}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px;color:var(--ink);cursor:pointer}
+.opt.on{border-color:var(--pri);background:linear-gradient(var(--pri-soft),var(--pri-soft)),var(--card)}
+.opt .oi{flex:none;width:44px;height:44px;border-radius:13px;background:var(--card2);display:grid;place-items:center;font-size:22px}
+.opt.on .oi{background:var(--pri)}
+.opt .ot{flex:1;min-width:0}
+.opt b{display:block;font-size:15px}
+.opt small{color:var(--mut);font-size:12.5px;line-height:1.35;display:block;margin-top:2px}
+.opt .chev{color:var(--mut);font-size:22px}
+.wnav{display:grid;grid-template-columns:1fr 2fr;gap:10px;padding:10px 16px}
+.sum{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.sum:last-child{border-bottom:0}
+.sum span{color:var(--mut)} .sum b{text-align:right}
+/* peserta */
+.part{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.part:last-child{border-bottom:0}
+.part input{flex:1;min-width:0;background:transparent;border:0;height:38px;font-weight:600;padding:0 6px;border-radius:8px}
+.part input:focus{background:var(--card2);outline:1px solid var(--pri)}
+.part.out{opacity:.5}
+.chk{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--mut);background:transparent;display:grid;place-items:center;color:var(--pri-ink);font-weight:900;font-size:14px;padding:0}
+.chk.on{background:var(--pri);border-color:var(--pri)}
+.gtag{flex:none;font-size:11px;font-weight:800;padding:4px 9px;border-radius:99px;border:1px solid;background:transparent}
+.gtag.L{color:var(--l);border-color:var(--l)} .gtag.P{color:var(--p);border-color:var(--p)}
+/* laman utama */
+.hero{padding:calc(26px + env(safe-area-inset-top)) 16px 8px;text-align:left;display:flex;align-items:center;gap:14px}
+.hero .logo{margin:0;width:54px;height:54px;flex:none}
+.hero h2{font-size:26px;font-weight:900;letter-spacing:-.02em}
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.stat b{display:block;font-size:22px;font-weight:800}
+.stat small{color:var(--mut);font-size:11.5px}
+/* papan TV — aksen limau */
+.tv{background:#0e121a}
+.tvc,.tvbox,.tvt,.tvbtn button{background:#1a202b;border-color:#2a3242}
+.tvc .h{background:#232a37;color:#d4f34a}
+.tvc .t.win,.tvr{color:#d4f34a}
+.tvc .s{color:#d4f34a}
+.tvrest span{background:#232a37}
 </style>
 </head>
 <body>
@@ -182,6 +345,14 @@ const LS = 'picklemix_v1';
 const MODES = {doubles:'Beregu', singles:'Perseorangan', mixed:'Beregu Campuran'};
 const FORMATS = {mix:'Mix & Match', rr:'Round Robin', kotc:'Raja Gelanggang', se:'Kalah Mati', pool:'Kumpulan + Kalah Mati', swiss:'Swiss'};
 const TOUR = new Set(['se', 'pool', 'swiss']);
+const FICON = {mix:'🔀', rr:'🔁', kotc:'👑', se:'🏆', pool:'🗂️', swiss:'♟️'};
+const FSHORT = {mix:'Rakan & lawan bertukar setiap pusingan secara adil', rr:'Semua berlawan dengan semua, tepat sekali',
+  kotc:'Menang naik gelanggang, kalah turun', se:'Kalah sekali terus terkeluar — dengan carta bracket',
+  pool:'Peringkat kumpulan, kemudian kalah mati', swiss:'Rekod sama berlawan — tiada siapa tersingkir'};
+const MICON = {singles:'👤', doubles:'👥', mixed:'⚤'};
+const MSHORT = {singles:'1 lawan 1 — setiap pemain dikira secara individu', doubles:'2 lawan 2 — rakan bertukar atau pasukan tetap',
+  mixed:'Beregu dengan pasangan Lelaki + Perempuan'};
+const initials = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 const CANDIDATES = 150;
 let db = {sessions:[], settings:{autoAnnounce:false}};
 try { const raw = localStorage.getItem(LS); if (raw) db = Object.assign(db, JSON.parse(raw)); } catch(e) {}
@@ -205,6 +376,8 @@ function norm(s){
   if (s.rrStart == null) s.rrStart = 0;
   if (!s.tcfg) s.tcfg = {seed:'list', third:true, groups:2, adv:2, swissRounds:4};
   if (s.tour === undefined) s.tour = null;
+  if (s.timerMins == null) s.timerMins = 15;
+  if (s.timerAuto == null) s.timerAuto = false;
   return s;
 }
 db.sessions.forEach(norm);
@@ -666,30 +839,34 @@ const teamName = (ids, nm) => ids.map(id => nm[id] ?? '?').join(' & ');
 /* ============ Laman utama ============ */
 function renderHome(){
   const list = [...db.sessions].sort((a, b) => b.updated - a.updated);
+  const totalM = db.sessions.reduce((a, s) => a + s.rounds.reduce((b, r) => b + r.courts.length, 0), 0);
+  const names = new Set(); db.sessions.forEach(s => s.players.forEach(p => names.add(p.name.trim().toLowerCase())));
   app.innerHTML = `
   <div class="hero">
-    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e9e21b"/>
-      ${[[20,20],[32,16],[44,20],[16,32],[28,30],[40,30],[48,34],[22,44],[34,44],[44,46],[32,54]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.2" fill="#b7ad00"/>`).join('')}</svg>
-    <h2>PickleMix</h2>
-    <p>Penjana perlawanan pickleball yang adil</p>
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1a202b"/><circle cx="32" cy="32" r="22" fill="#d4f34a"/>
+      ${[[24,22],[32,19],[40,22],[20,31],[28,30],[36,30],[44,32],[24,40],[32,40],[40,41],[32,47]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.4" fill="#8fa521"/>`).join('')}</svg>
+    <div><h2>PickleMix</h2><p class="hint" style="margin:2px 0 0">Perlawanan adil · Kejohanan · Kedudukan langsung</p></div>
   </div>
   <main>
-    <button class="btn primary big" onclick="newDraft()">＋ Sesi Baharu</button>
-    <div style="height:12px"></div>
-    <section class="card sw">
+    <div class="statrow">
+      <div class="stat"><b>${db.sessions.length}</b><small>Sesi</small></div>
+      <div class="stat"><b>${totalM}</b><small>Perlawanan</small></div>
+      <div class="stat"><b>${names.size}</b><small>Pemain</small></div>
+    </div>
+    <button class="btn primary big" onclick="newDraft()">＋ Sesi / Kejohanan Baharu</button>
+    <span class="lbl" style="margin:24px 2px 10px">Sesi terkini</span>
+    ${list.length ? list.map(s => `
+      <div class="opt" role="button" tabindex="0" onclick="openSession('${s.id}')">
+        <span class="oi">${FICON[s.format]}</span>
+        <span class="ot"><b>${esc(s.name)}</b><small>${FORMATS[s.format]} · ${MODES[s.mode]} · ${s.players.filter(p => p.active).length} pemain · ${s.rounds.length} pusingan</small></span>
+        <button class="link" style="color:var(--mut);font-size:17px" aria-label="Padam sesi" onclick="event.stopPropagation();delSession('${s.id}')">🗑</button>
+        <span class="chev">›</span>
+      </div>`).join('') : `<section class="card"><div class="empty">🏓<br>Belum ada sesi.<br>Tekan butang di atas untuk bermula — siap dalam 30 saat.</div></section>`}
+    <section class="card sw" style="margin-top:6px">
       <div><b>Umum automatik</b><div class="hint" style="margin:2px 0 0">Baca padanan setiap pusingan baharu dengan suara</div></div>
       ${toggle(db.settings.autoAnnounce, 'setAuto')}
     </section>
-    <section class="card">
-      <span class="lbl">Sejarah sesi</span>
-      ${list.length ? list.map(s => `
-        <div class="sess" style="padding:8px 0;border-top:1px solid var(--line)">
-          <div class="t"><b>${esc(s.name)}</b><small>${FORMATS[s.format]} · ${MODES[s.mode]} · ${s.players.filter(p => p.active).length} pemain · ${s.rounds.length} pusingan</small></div>
-          <button class="btn" onclick="openSession('${s.id}')">Buka</button>
-          <button class="btn danger" aria-label="Padam" onclick="delSession('${s.id}')">🗑</button>
-        </div>`).join('') : `<div class="empty">Belum ada sesi. Tekan “Sesi Baharu” untuk bermula.</div>`}
-    </section>
-    <p class="foot">Tiada akaun diperlukan · Semua data disimpan dalam peranti ini sahaja</p>
+    <p class="foot">Tiada akaun diperlukan · Data disimpan dalam peranti ini sahaja</p>
   </main>`;
 }
 function setAuto(v){ db.settings.autoAnnounce = v; save(); if (v) toast('Umum automatik dihidupkan'); }
@@ -702,7 +879,9 @@ function delSession(id){
 
 /* ============ Persediaan sesi ============ */
 function defaultPlayers(n){ return Array.from({length:n}, (_, i) => ({id:uid(), name:'P' + (i + 1), g: i % 2 ? 'P' : 'L', active:true})); }
-function newDraft(){ draft = norm({mode:'doubles', courts:2, players:defaultPlayers(8), locks:[], rounds:[]}); view.screen = 'setup'; render(); }
+function newDraft(){ draft = norm({mode:'doubles', courts:2, players:defaultPlayers(8), locks:[], rounds:[]}); view.screen = 'setup'; view.step = 1; render(); window.scrollTo(0, 0); }
+function wStep(d){ view.step = Math.max(1, Math.min(4, (view.step || 1) + d)); render(); window.scrollTo(0, 0); }
+function pickFmt(k){ draft.format = k; wStep(1); }
 function setMode(m){ draft.mode = m; if (m === 'singles') draft.locks = []; render(); }
 function stepCourts(d){ draft.courts = Math.max(1, Math.min(8, draft.courts + d)); render(); }
 function stepCount(d){
@@ -778,14 +957,14 @@ function restartTour(){
   modal('Mula semula kejohanan?', 'Carta kejohanan semasa akan dibina semula dengan tetapan terkini mulai pusingan seterusnya. Pusingan & skor yang lepas kekal dalam sejarah.',
     [{t:'↺ Mula semula', cls:'danger', fn:() => { S.tour = null; markDirty(); }}, {t:'Batal'}]);
 }
-function settingsHTML(ctx){
+function settingsHTML(ctx, withFmt = true){
   const s = ctxObj(ctx);
   const seg = keys => `<div class="seg">${keys.map(k => `<button class="${s.format === k ? 'on' : ''}" onclick="setFmt('${ctx}','${k}')">${FORMATS[k]}</button>`).join('')}</div>`;
   return `<section class="card">
-    <span class="lbl">Format sosial</span>
+    ${withFmt ? `<span class="lbl">Format sosial</span>
     ${seg(['mix', 'rr', 'kotc'])}
     <span class="lbl" style="margin-top:12px">Format kejohanan 🏆</span>
-    ${seg(['se', 'pool', 'swiss'])}
+    ${seg(['se', 'pool', 'swiss'])}` : `<span class="lbl">${FICON[s.format]} ${FORMATS[s.format]} — tetapan</span>`}
     <p class="hint">${formatDesc(s)}</p>
     ${tourPreview(s)}
     ${tourOpts(ctx)}
@@ -831,31 +1010,57 @@ function addLock(ctx){
 }
 function delLock(ctx, i){ ctxObj(ctx).locks.splice(i, 1); after(ctx); }
 
+const WSTEPS = ['Format', 'Mod & gelanggang', 'Pemain', 'Semak & mula'];
+function gTag(ctx, p){ return `<button class="gtag ${p.g}" onclick="toggleG('${ctx}','${p.id}')" title="Tukar jantina">${p.g === 'L' ? '♂ Lelaki' : '♀ Perempuan'}</button>`; }
 function renderSetup(){
-  const d = draft;
-  app.innerHTML = `
-  <header class="bar"><button class="ic" aria-label="Kembali" onclick="go('home')">‹</button><h1>Sesi Baharu</h1><span></span></header>
-  <main>
+  const d = draft, st = view.step || 1;
+  const L = d.players.filter(p => p.g === 'L').length;
+  const fmtOpt = k => `<button class="opt ${d.format === k ? 'on' : ''}" onclick="pickFmt('${k}')"><span class="oi">${FICON[k]}</span><span class="ot"><b>${FORMATS[k]}</b><small>${FSHORT[k]}</small></span><span class="chev">›</span></button>`;
+  let body = '';
+  if (st === 1) body = `<div class="wq">Pilih format permainan</div>
+    <span class="lbl">Sosial</span>${['mix', 'rr', 'kotc'].map(fmtOpt).join('')}
+    <span class="lbl" style="margin-top:16px">Kejohanan 🏆</span>${['se', 'pool', 'swiss'].map(fmtOpt).join('')}`;
+  if (st === 2) body = `<div class="wq">Mod & gelanggang</div>
+    ${Object.keys(MODES).map(k => `<button class="opt ${d.mode === k ? 'on' : ''}" onclick="setMode('${k}')"><span class="oi">${MICON[k]}</span><span class="ot"><b>${MODES[k]}</b><small>${MSHORT[k]}</small></span></button>`).join('')}
+    <section class="card" style="margin-top:6px"><div class="row2" style="margin:0">
+      <div><span class="lbl">Gelanggang</span>${stepper('stepCourts', d.courts)}</div>
+      <div><span class="lbl">Pemain</span>${stepper('stepCount', d.players.length)}</div></div>
+      <p class="hint">${capHint(d.mode, d.courts, d.players.length)}</p></section>
+    ${settingsHTML('draft', false)}`;
+  if (st === 3) body = `<div class="wq">Senarai pemain</div>
     <section class="card">
-      <span class="lbl">Mod permainan</span>
-      <div class="seg">${Object.entries(MODES).map(([k, v]) => `<button class="${d.mode === k ? 'on' : ''}" onclick="setMode('${k}')">${v}</button>`).join('')}</div>
-      <div class="row2">
-        <div><span class="lbl">Gelanggang</span>${stepper('stepCourts', d.courts)}</div>
-        <div><span class="lbl">Pemain</span>${stepper('stepCount', d.players.length)}</div>
-      </div>
-      <p class="hint">${capHint(d.mode, d.courts, d.players.length)}</p>
-    </section>
-    ${settingsHTML('draft')}
-    <section class="card">
-      <div class="hrow"><span class="lbl">Nama pemain</span><button class="link" onclick="resetNames()">Set semula</button></div>
-      ${d.mode === 'mixed' ? '<div class="hint" style="margin:4px 0 0">Tekan butang L/P untuk tetapkan jantina.</div>' : ''}
-      <div class="plist">${d.players.map((p, i) => `<div class="prow"><span class="num">${i + 1}</span>
+      <div class="hrow"><span class="lbl">Peserta · ${d.players.length}${d.mode === 'mixed' ? ` · ${L} L · ${d.players.length - L} P` : ''}</span><button class="link" onclick="resetNames()">Set semula</button></div>
+      <p class="hint" style="margin:6px 0 4px">${TOUR.has(d.format) || d.format === 'rr' ? 'Seed 1 = paling atas. Letak pemain terkuat di atas.' : 'Tekan nama untuk menukar.'}</p>
+      ${d.players.map((p, i) => `<div class="part"><span class="av ${d.mode === 'mixed' ? p.g : ''}">${i + 1}</span>
         <input value="${esc(p.name)}" aria-label="Nama pemain ${i + 1}" oninput="renameDraft(${i},this.value)" onfocus="this.select()">
-        ${d.mode === 'mixed' ? gBtn('draft', p) : ''}</div>`).join('')}</div>
+        ${d.mode === 'mixed' ? gTag('draft', p) : ''}</div>`).join('')}
+      <button class="btn" style="width:100%;margin-top:10px" onclick="stepCount(1)">＋ Tambah pemain</button>
     </section>
-    ${d.mode !== 'singles' ? locksHTML('draft') : ''}
-    <button class="btn primary big" onclick="startSession()">Mula Sesi ▶</button>
-  </main>`;
+    ${d.mode !== 'singles' ? locksHTML('draft') : ''}`;
+  if (st === 4) {
+    const c = capacity(d.mode, d.courts, d.players.length);
+    body = `<div class="wq">Semak & mula</div>
+    <section class="card">
+      <div class="sum"><span>Format</span><b>${FICON[d.format]} ${FORMATS[d.format]}</b></div>
+      <div class="sum"><span>Mod</span><b>${MODES[d.mode]}</b></div>
+      <div class="sum"><span>Gelanggang</span><b>${d.courts} (${c.used} digunakan)</b></div>
+      <div class="sum"><span>Pemain</span><b>${d.players.length}${d.mode === 'mixed' ? ` · ${L} L · ${d.players.length - L} P` : ''}</b></div>
+      ${scoringOn(d) ? `<div class="sum"><span>Skor</span><b>Hingga ${d.target}${d.winBy2 ? ', beza 2' : ''}</b></div>` : '<div class="sum"><span>Skor</span><b>Tidak direkod</b></div>'}
+      ${d.mode !== 'singles' && d.format !== 'kotc' ? `<div class="sum"><span>Pasangan tetap</span><b>${d.locks.length}</b></div>` : ''}
+    </section>
+    ${tourPreview(d)}
+    <p class="hint">${formatDesc(d)}</p>`;
+  }
+  app.innerHTML = `
+  <header class="bar"><button class="ic" aria-label="Kembali" onclick="${st > 1 ? 'wStep(-1)' : "go('home')"}">‹</button>
+    <h1>Sesi Baharu<small>Langkah ${st} daripada 4 · ${WSTEPS[st - 1]}</small></h1>
+    <button class="ic" aria-label="Batal" onclick="go('home')">✕</button></header>
+  <div class="wprog"><i style="width:${st * 25}%"></i></div>
+  <main style="padding-bottom:110px">${body}</main>
+  <nav class="dock"><div class="in"><div class="wnav">
+    ${st > 1 ? '<button class="btn big" onclick="wStep(-1)">‹ Kembali</button>' : '<span></span>'}
+    <button class="btn primary big" onclick="${st < 4 ? 'wStep(1)' : 'startSession()'}">${st < 4 ? 'Seterusnya ›' : 'Mula Sesi ▶'}</button>
+  </div></div></nav>`;
 }
 function startSession(){
   const d = draft;
@@ -879,7 +1084,7 @@ function renderGame(){
   const last = view.ri === S.rounds.length - 1;
   app.innerHTML = `
   <header class="bar"><button class="ic" aria-label="Laman utama" onclick="go('home')">‹</button>
-    <h1>${esc(S.name)}<small>${FORMATS[S.format]} · ${MODES[S.mode]} · ${S.players.filter(p => p.active).length} pemain</small></h1><span></span></header>
+    <h1>${esc(S.name)}<small>${FORMATS[S.format]} · ${MODES[S.mode]} · ${S.players.filter(p => p.active).length} pemain</small></h1><button class="ic" aria-label="Papan TV" title="Papan TV / projektor" onclick="openTV()">📺</button></header>
   <main id="main" style="padding-bottom:${t === 'match' ? 170 : 100}px">${body}</main>
   <nav class="dock"><div class="in">
     ${t === 'match' ? `<div class="cta">${last
@@ -889,7 +1094,11 @@ function renderGame(){
       ${[['match', '🏓', 'Perlawanan'], ['rank', '🏆', 'Kedudukan'], ['stats', '📊', 'Statistik'], ['members', '👥', 'Ahli & Tetapan']].map(([k, i, l]) =>
         `<button class="${t === k ? 'on' : ''}" onclick="view.tab='${k}';render();window.scrollTo(0,0)"><i>${i}</i>${l}</button>`).join('')}
     </div></div></nav>`;
-  if (t === 'match') attachSwipe();
+  if (t === 'match') {
+    attachSwipe();
+    const ch = document.querySelector('#rchips .on'), bar = document.getElementById('rchips');
+    if (ch && bar) bar.scrollLeft = ch.offsetLeft - bar.clientWidth / 2 + ch.clientWidth / 2;
+  }
 }
 
 function scoreWarn(c){
@@ -907,7 +1116,10 @@ function matchTab(){
   const r = S.rounds[view.ri], nm = nameMap(), last = view.ri === S.rounds.length - 1;
   const lockSet = new Set(S.locks.map(l => pk(l[0], l[1])));
   const kotc = S.format === 'kotc', sc = scoringOn(S);
-  const team = (t, ci, side) => `<div class="team ${sc ? teamCls(r.courts[ci], side) : ''}" id="t${side}-${ci}">${t.map(id => `<span>${esc(nm[id])}</span>`).join('')}${t.length === 2 && lockSet.has(pk(t[0], t[1])) && !kotc ? '<small class="hint" style="margin:0">🔒 tetap</small>' : ''}</div>`;
+  const gOf = {}; S.players.forEach(p => gOf[p.id] = p.g);
+  const side = (t, c, sd) => `<div class="side ${sd === 'b' ? 'r' : ''} ${sc ? teamCls(c, sd) : ''}">${t.map(id =>
+    `<div class="pl"><span class="av ${S.mode === 'mixed' ? gOf[id] : ''}">${esc(initials(nm[id]))}</span><span class="nm">${esc(nm[id])}</span></div>`).join('')}
+    ${t.length === 2 && lockSet.has(pk(t[0], t[1])) && !kotc ? '<small class="hint" style="margin:0">🔒 tetap</small>' : ''}</div>`;
   const val = v => Number.isFinite(v) ? v : '';
   let rrCard = '';
   if (S.format === 'rr' && last) {
@@ -931,20 +1143,18 @@ function matchTab(){
   return `
   ${S.dirty && last ? `<div class="notice">✏️ Perubahan ahli/tetapan disimpan dan akan digunakan mulai pusingan seterusnya.
      <button class="btn" onclick="confirmRegen()">Atau jana semula pusingan ${view.ri + 1} sekarang</button></div>` : ''}
-  <div class="rnav">
-    <button aria-label="Pusingan sebelum" onclick="nav(-1)" ${view.ri === 0 ? 'disabled' : ''}>‹</button>
-    <div><b>Pusingan ${view.ri + 1}</b><small>${last ? 'Terkini' : 'Sejarah'} · daripada ${S.rounds.length}</small></div>
-    <button aria-label="Pusingan seterusnya" onclick="nav(1)" ${last ? 'disabled' : ''}>›</button>
-  </div>
-  ${unscored ? `<div class="notice">${kotc ? '👑 Masukkan skor semua gelanggang untuk tentukan siapa naik & turun.' : '🏆 Masukkan skor semua gelanggang sebelum pusingan seterusnya. Tekan ⚡ untuk skor pantas.'}</div>` : ''}
-  ${r.courts.map((c, i) => `<div class="court ${(kotc && i === 0) || (c.label && /Akhir$/.test(c.label)) ? 'king' : ''}"><div class="ctitle"><span>${kotc && i === 0 ? '👑 GELANGGANG RAJA (1)' : 'GELANGGANG ' + (i + 1)}</span>${kotc && i > 0 ? '<span>menang ↑ · kalah ↓</span>' : c.label ? `<span>${esc(c.label)}</span>` : ''}</div>
-     <div class="teams">${team(c.a, i, 'a')}<div class="vs">VS</div>${team(c.b, i, 'b')}</div>
-     ${sc ? `<div class="score">
-        <input type="number" inputmode="numeric" min="0" max="99" placeholder="0" value="${val(c.sa)}" aria-label="Skor pasukan kiri gelanggang ${i + 1}" oninput="setScore(${view.ri},${i},'sa',this.value)" onfocus="this.select()">
-        <button class="kbtn" onclick="openKeypad(${view.ri},${i})" aria-label="Skor pantas gelanggang ${i + 1}">⚡<small>PANTAS</small></button>
-        <input type="number" inputmode="numeric" min="0" max="99" placeholder="0" value="${val(c.sb)}" aria-label="Skor pasukan kanan gelanggang ${i + 1}" oninput="setScore(${view.ri},${i},'sb',this.value)" onfocus="this.select()">
-      </div><div class="swarn" id="sw-${i}">${scoreWarn(c)}</div>` : ''}
-   </div>`).join('')}
+  <div class="rchips" id="rchips">${S.rounds.map((_, i) => `<button class="${i === view.ri ? 'on' : ''}" onclick="view.ri=${i};render()">Pusingan ${i + 1}</button>`).join('')}</div>
+  <div class="rtitle"><b>Pusingan ${view.ri + 1}</b><small>${last ? '● Sedang berlangsung' : 'Sejarah'} · ${S.rounds.length} pusingan</small></div>
+  ${last ? timerCard() : ''}
+  ${unscored ? `<div class="notice">${kotc ? '👑 Masukkan skor semua gelanggang untuk tentukan siapa naik & turun.' : '🏆 Masukkan skor semua gelanggang sebelum pusingan seterusnya.'} Tekan kotak skor untuk mengisi.</div>` : ''}
+  ${r.courts.map((c, i) => { const has = Number.isFinite(c.sa) || Number.isFinite(c.sb), w = scoreWarn(c);
+    return `<div class="court ${(kotc && i === 0) || (c.label && /Akhir$/.test(c.label)) ? 'king' : ''}">
+     <div class="ctitle"><span>${kotc && i === 0 ? '👑 Gelanggang Raja' : 'Perlawanan ' + (view.ri + 1) + '.' + (i + 1) + ' · Gelanggang ' + (i + 1)}</span>${kotc && i > 0 ? '<span>menang ↑ · kalah ↓</span>' : c.label ? `<span>${esc(c.label)}</span>` : ''}</div>
+     <div class="mrow">${side(c.a, c, 'a')}
+       ${sc ? `<button class="sbox ${has ? '' : 'empty'}" onclick="openKeypad(${view.ri},${i})" aria-label="Isi skor gelanggang ${i + 1}">${has ? `${val(c.sa) === '' ? 0 : c.sa} : ${val(c.sb) === '' ? 0 : c.sb}` : 'Skor'}<small>${scored(c) && !w ? '✓ SELESAI' : has ? 'SUNTING' : 'TEKAN'}</small></button>` : '<div class="vs">VS</div>'}
+       ${side(c.b, c, 'b')}</div>
+     ${sc && w ? `<div class="swarn">${w}</div>` : ''}
+   </div>`; }).join('')}
   <section class="card">
     <span class="lbl">Berehat (${r.rest.length})</span>
     ${r.rest.length ? `<div class="chips">${r.rest.map(id => `<span class="chip">☕ ${esc(nm[id])}</span>`).join('')}</div>` : '<div class="hint" style="margin:0">Semua pemain bermain pusingan ini.</div>'}
@@ -966,31 +1176,45 @@ function setScore(ri, ci, side, v){
   const w = document.getElementById('sw-' + ci); if (w) w.textContent = scoreWarn(c);
 }
 /* Skor sekali tekan: pilih pemenang, tekan mata pasukan kalah — mata pemenang diisi automatik */
+// Papan kekunci skor: pilih pasukan, tekan nombor. Jika nombor < sasaran, pasukan lawan diisi
+// automatik sebagai pemenang (cth. tekan 2 → 2 : 11). Jika ≥ sasaran, pasukan ini menang.
 let kp = null;
-function openKeypad(ri, ci){ kp = {ri, ci, win:null}; drawKeypad(); }
+function openKeypad(ri, ci){ const c = S.rounds[ri].courts[ci]; kp = {ri, ci, side:'a', sa:c.sa, sb:c.sb}; drawKeypad(); }
 function closeKeypad(){ const e = document.getElementById('kp'); if (e) e.remove(); kp = null; }
 function drawKeypad(){
   const c = S.rounds[kp.ri].courts[kp.ci], nm = nameMap(), t = S.target;
-  const maxN = S.winBy2 ? t + 6 : t - 1;
-  const nums = Array.from({length:maxN + 1}, (_, i) => i);
-  const winScore = n => S.winBy2 ? Math.max(t, n + 2) : t;
+  const nums = Array.from({length:(S.winBy2 ? t + 6 : t) + 1}, (_, i) => i);
+  const cur = kp['s' + kp.side];
+  let stat = '', cls = '';
+  if (Number.isFinite(kp.sa) && Number.isFinite(kp.sb)) {
+    const w = scoreWarn({sa:kp.sa, sb:kp.sb});
+    if (w) { stat = w; cls = 'warn'; }
+    else stat = `🏆 ${kp.sa > kp.sb ? 'Pasukan 1' : 'Pasukan 2'} menang ${Math.max(kp.sa, kp.sb)} : ${Math.min(kp.sa, kp.sb)}`;
+  }
   let el = document.getElementById('kp');
   if (!el) { el = document.createElement('div'); el.id = 'kp'; el.className = 'modal'; el.onclick = e => { if (e.target === el) closeKeypad(); }; document.body.appendChild(el); }
   el.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">
-    <h3>⚡ Skor pantas — Gelanggang ${kp.ci + 1}</h3>
-    <div class="mbody">1) Siapa menang?</div>
-    <div class="kteams">${['a', 'b'].map(sd => `<button class="${kp.win === sd ? 'on' : ''}" onclick="kp.win='${sd}';drawKeypad()">${esc(teamName(c[sd], nm))}</button>`).join('')}</div>
-    <div class="mbody" style="margin-top:12px">2) Mata pasukan yang kalah${kp.win ? '' : ' (pilih pemenang dahulu)'}:</div>
-    <div class="kgrid">${nums.map(n => `<button ${kp.win ? '' : 'disabled'} onclick="kpPick(${n})" title="${kp.win ? winScore(n) + ' : ' + n : ''}">${n}</button>`).join('')}</div>
-    <p class="hint">Permainan hingga ${t}${S.winBy2 ? ', menang beza 2' : ''}. Contoh: tekan 7 → ${t} : 7.</p>
-    <div class="mbtns"><button class="btn big" onclick="closeKeypad()">Batal</button></div></div>`;
+    <div class="hrow"><h3 style="margin:0">Skor · Gelanggang ${kp.ci + 1}</h3><button class="ic" aria-label="Tutup" onclick="closeKeypad()">✕</button></div>
+    <div class="kscore">${['a', 'b'].map((sd, i) => `<div class="kt ${kp.side === sd ? 'on' : ''}" role="button" onclick="kp.side='${sd}';drawKeypad()">
+      <small>PASUKAN ${i + 1}</small><b>${esc(teamName(c[sd], nm))}</b><div class="kn">${Number.isFinite(kp['s' + sd]) ? kp['s' + sd] : '–'}</div></div>`).join('<span class="kcolon">:</span>')}</div>
+    <div class="kstat ${cls}">${stat}</div>
+    <div class="kgrid">${nums.map(n => `<button class="${cur === n ? 'on' : ''}" onclick="kpPick(${n})">${n}</button>`).join('')}</div>
+    <p class="hint">Permainan hingga ${t}${S.winBy2 ? ', menang beza 2' : ''}. Pilih pasukan, kemudian tekan mata — skor lawan diisi automatik.</p>
+    <div class="wnav" style="padding:12px 0 0"><button class="btn big" onclick="kpClear()">Padam</button><button class="btn primary big" onclick="kpSave()">Simpan ✓</button></div></div>`;
 }
 function kpPick(n){
-  const c = S.rounds[kp.ri].courts[kp.ci], t = S.target;
-  const w = S.winBy2 ? Math.max(t, n + 2) : t;
-  if (kp.win === 'a') { c.sa = w; c.sb = n; } else { c.sb = w; c.sa = n; }
-  save(); closeKeypad(); render(); toast(`Skor ${c.sa} : ${c.sb} disimpan`);
+  const me = 's' + kp.side, ot = kp.side === 'a' ? 'sb' : 'sa', t = S.target;
+  kp[me] = n;
+  if (n < t) kp[ot] = S.winBy2 ? Math.max(t, n + 2) : t;
+  else kp[ot] = S.winBy2 ? n - 2 : (Number.isFinite(kp[ot]) && kp[ot] < n ? kp[ot] : t - 1);
+  drawKeypad();
 }
+function kpSave(){
+  const c = S.rounds[kp.ri].courts[kp.ci];
+  c.sa = Number.isFinite(kp.sa) ? kp.sa : null; c.sb = Number.isFinite(kp.sb) ? kp.sb : null;
+  save(); closeKeypad(); render(); if (scored(c)) toast(`Skor ${c.sa} : ${c.sb} disimpan`);
+}
+function kpClear(){ const c = S.rounds[kp.ri].courts[kp.ci]; c.sa = c.sb = null; save(); closeKeypad(); render(); }
 function nav(d){ const n = view.ri + d; if (n < 0 || n >= S.rounds.length) return; view.ri = n; render(); }
 function attachSwipe(){
   const m = document.getElementById('main'); let x0 = null, y0 = null;
@@ -1013,6 +1237,7 @@ function nextRound(){
   if (r && r.done) { save(); render(); return TOUR.has(S.format) ? tourDone(r.champ) : rrDone(); }
   if (!r) return toast('Pemain aktif tidak mencukupi');
   S.rounds.push(r); S.dirty = false; view.ri = S.rounds.length - 1;
+  if (S.timerAuto) { r.tm = tmNew(); r.tm.end = Date.now() + r.tm.left; r.tm.run = true; }
   save(); render(); window.scrollTo(0, 0); autoAnnounce();
 }
 function rrDone(){
@@ -1086,12 +1311,14 @@ function rankTab(){
   const kotc = S.format === 'kotc';
   return `${chart}
   ${canTeam ? `<div class="seg two" style="margin-bottom:12px"><button class="${!showTeam ? 'on' : ''}" onclick="view.rankView='ind';render()">Individu</button><button class="${showTeam ? 'on' : ''}" onclick="view.rankView='team';render()">Pasukan</button></div>` : ''}
-  ${top.length ? `<section class="card"><div class="podium">${pod(top[1], 1)}${pod(top[0], 0)}${pod(top[2], 2)}</div></section>` : ''}
+  ${top.length && !TOUR.has(S.format) ? `<section class="card winner"><div class="cup">🏆</div><div class="t">Pendahulu semasa</div><b>${label(top[0])}</b>
+    <div class="hint" style="margin-top:4px">${top[0].w} menang · ${top[0].pf - top[0].pa >= 0 ? '+' : ''}${top[0].pf - top[0].pa} beza mata${top[1] ? ` · 🥈 ${label(top[1])}` : ''}${top[2] ? ` · 🥉 ${label(top[2])}` : ''}</div></section>` : ''}
   <section class="card">
     <div class="hrow"><span class="lbl">Kedudukan ${showTeam ? 'pasukan' : 'individu'}</span><button class="link" onclick="shareRank()">📤 Kongsi</button></div>
-    <table><thead><tr><th>#</th><th style="text-align:left">Nama</th><th>Main</th><th>Mn</th><th>K</th><th>+/−</th>${kotc ? '<th>👑</th>' : '<th>%</th>'}</tr></thead>
-    <tbody>${rows.map((s, i) => { const d = s.pf - s.pa; return `<tr><td>${i + 1}</td><td class="nm ${!showTeam && !act.has(s.key) ? 'off' : ''}">${label(s)}</td><td>${s.mp}</td><td><b>${s.w}</b></td><td>${s.l}</td>
-      <td class="${d > 0 ? 'pos' : d < 0 ? 'neg' : ''}">${d > 0 ? '+' : ''}${d}</td>${kotc ? `<td>${s.crown}</td>` : `<td>${s.mp ? Math.round(s.w / s.mp * 100) : 0}</td>`}</tr>`; }).join('')}</tbody></table>
+    <table class="lb"><thead><tr><th>#</th><th style="text-align:left">${showTeam ? 'Pasukan' : 'Pemain'}</th><th>M-K</th><th>Beza</th><th class="pts">Mata</th></tr></thead>
+    <tbody>${rows.map((s, i) => { const d = s.pf - s.pa; return `<tr><td><span class="rk ${i < 3 && s.w > 0 ? 'r' + (i + 1) : ''}">${i + 1}</span></td>
+      <td class="nm ${!showTeam && !act.has(s.key) ? 'off' : ''}">${label(s)}<small>${s.mp} main · ${s.mp ? Math.round(s.w / s.mp * 100) : 0}% menang${kotc ? ` · 👑 ${s.crown}` : ''}</small></td>
+      <td><b>${s.w}-${s.l}</b></td><td class="${d > 0 ? 'pos' : d < 0 ? 'neg' : ''}">${d > 0 ? '+' : ''}${d}</td><td class="pts">${s.pf}</td></tr>`; }).join('')}</tbody></table>
     <p class="hint">${matches} perlawanan bercatat. Susunan: menang → % menang → beza mata → mata dijaringkan.${kotc ? ' 👑 = menang di Gelanggang Raja.' : ''}</p>
   </section>`;
 }
@@ -1180,33 +1407,32 @@ let newG = 'L';
 function markDirty(){ S.dirty = true; save(); render(); }
 function membersTab(){
   const act = S.players.filter(p => p.active), out = S.players.filter(p => !p.active);
-  const prow = p => `<div class="prow">
-      ${S.mode === 'mixed' ? gBtn('S', p) : ''}
-      <input value="${esc(p.name)}" aria-label="Nama" onchange="renameS('${p.id}',this.value)" ${p.active ? '' : 'class="off"'}>
-      <button class="btn ${p.active ? 'danger' : ''}" style="min-width:86px" onclick="toggleActive('${p.id}')">${p.active ? 'Keluar' : 'Masuk'}</button></div>`;
+  const mixed = S.mode === 'mixed', L = act.filter(p => p.g === 'L').length;
+  const prow = p => `<div class="part ${p.active ? '' : 'out'}">
+      <button class="chk ${p.active ? 'on' : ''}" aria-label="${p.active ? 'Hadir — tekan untuk keluarkan' : 'Tidak hadir — tekan untuk masukkan'}" onclick="toggleActive('${p.id}')">${p.active ? '✓' : ''}</button>
+      <span class="av ${mixed ? p.g : ''}">${esc(initials(p.name))}</span>
+      <input value="${esc(p.name)}" aria-label="Nama" onchange="renameS('${p.id}',this.value)">
+      ${mixed ? gTag('S', p) : ''}</div>`;
   return `
+  <section class="card">
+    <div class="hrow"><span class="lbl" style="margin:0">Peserta · ${act.length}/${S.players.length}${mixed ? ` · ${L} L · ${act.length - L} P` : ''}</span></div>
+    <p class="hint" style="margin:6px 0 4px">Tanda ✓ = bermain. Buang tanda untuk pemain yang balik awal.</p>
+    ${S.players.map(prow).join('')}
+    <div class="prow" style="margin-top:12px">
+      ${mixed ? `<button class="gtag ${newG}" onclick="newG=newG==='L'?'P':'L';render()">${newG === 'L' ? '♂ L' : '♀ P'}</button>` : ''}
+      <input class="inp" id="newName" placeholder="＋ Tambah pemain (datang lewat)" onkeydown="if(event.key==='Enter')addPlayer()">
+      <button class="btn primary" onclick="addPlayer()">Tambah</button>
+    </div>
+    <p class="hint">Perubahan digunakan mulai pusingan seterusnya, atau jana semula pusingan semasa dari tab Perlawanan.</p>
+  </section>
   <section class="card">
     <div class="row2" style="margin:0">
       <div><span class="lbl">Gelanggang</span>${stepper('stepCourtsS', S.courts)}</div>
-      <div><span class="lbl">Mod</span><div style="padding:10px 0;font-weight:700">${MODES[S.mode]}</div></div>
+      <div><span class="lbl">Mod</span><div style="padding:10px 0;font-weight:700">${MICON[S.mode]} ${MODES[S.mode]}</div></div>
     </div>
     <p class="hint">${capHint(S.mode, S.courts, act.length)}</p>
   </section>
   ${settingsHTML('S')}
-  <section class="card">
-    <span class="lbl">Tambah pemain (datang lewat)</span>
-    <div class="prow">
-      ${S.mode === 'mixed' ? `<button class="g ${newG}" onclick="newG=newG==='L'?'P':'L';render()">${newG === 'L' ? '♂ L' : '♀ P'}</button>` : ''}
-      <input class="inp" id="newName" placeholder="Nama pemain" onkeydown="if(event.key==='Enter')addPlayer()">
-      <button class="btn primary" onclick="addPlayer()">Tambah</button>
-    </div>
-  </section>
-  <section class="card">
-    <span class="lbl">Pemain aktif (${act.length})</span>
-    <div class="plist">${act.map(prow).join('')}</div>
-    ${out.length ? `<span class="lbl" style="margin-top:16px">Telah keluar (${out.length})</span><div class="plist">${out.map(prow).join('')}</div>` : ''}
-    <p class="hint">Perubahan digunakan mulai pusingan seterusnya, atau jana semula pusingan semasa dari tab Perlawanan.</p>
-  </section>
   ${S.mode !== 'singles' ? locksHTML('S') : ''}
   <section class="card">
     <span class="lbl">Nama sesi</span>
@@ -1231,11 +1457,155 @@ function addPlayer(){
   setTimeout(() => { const e = document.getElementById('newName'); e && e.focus(); }, 0);
 }
 
+/* ============ Bunyi (Web Audio — tiada fail luar) ============ */
+let AC = null;
+function audio(){
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch(e) {}
+  return AC;
+}
+document.addEventListener('pointerdown', audio, {passive:true});
+function tone(freq, start, dur, type, vol){
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t0 = a.currentTime + start;
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + .02);
+  g.gain.setValueAtTime(vol, t0 + dur - .05); g.gain.linearRampToValueAtTime(0, t0 + dur);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + dur + .05);
+}
+function horn(){
+  [0, .8, 1.6].forEach(t => { tone(220, t, .6, 'sawtooth', .3); tone(277, t, .6, 'sawtooth', .2); });
+  try { navigator.vibrate && navigator.vibrate([600, 200, 600, 200, 600]); } catch(e) {}
+}
+function beep(n){ for (let i = 0; i < n; i++) tone(880, i * .3, .15, 'sine', .3); }
+
+/* ============ Pemasa perlawanan (setiap pusingan) ============ */
+const TVWIN = /^#tv=/.test(location.hash);   // tetingkap TV berasingan (baca sahaja)
+const overHidden = new Set();
+const fmtT = ms => { const s = Math.ceil(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const latest = () => S && S.rounds[S.rounds.length - 1];
+function tmLeft(r){
+  if (!r || !r.tm) return S.timerMins * 60000;
+  return r.tm.run ? Math.max(0, r.tm.end - Date.now()) : r.tm.left;
+}
+function tmNew(){ return {left:S.timerMins * 60000, run:false, end:null, horn:false, warn:false}; }
+function tmStart(){ const r = latest(); r.tm = r.tm || tmNew(); if (r.tm.left <= 0) r.tm = tmNew();
+  r.tm.end = Date.now() + r.tm.left; r.tm.run = true; r.tm.horn = false; audio(); save(); render(); }
+function tmPause(){ const r = latest(); if (!r.tm) return; r.tm.left = tmLeft(r); r.tm.run = false; save(); render(); }
+function tmReset(){ const r = latest(); r.tm = tmNew(); overHidden.delete(S.rounds.length - 1); save(); render(); }
+function tmAdd(min){ const r = latest(); r.tm = r.tm || tmNew();
+  if (r.tm.run) r.tm.end += min * 60000; else r.tm.left = Math.max(0, r.tm.left + min * 60000);
+  r.tm.horn = false; r.tm.warn = false; overHidden.delete(S.rounds.length - 1); save(); render(); }
+function setMins(m){ S.timerMins = m; const r = latest(); if (r && (!r.tm || (!r.tm.run && !r.tm.horn))) r.tm = tmNew(); save(); render(); }
+function timerCard(){
+  const r = latest(), run = r.tm && r.tm.run;
+  return `<section class="card">
+    <div class="trow">
+      <div><span class="lbl" style="margin:0">⏱ Pemasa · ${S.timerMins} min</span><div class="tbig tmr">${fmtT(tmLeft(r))}</div></div>
+      <div class="tbtns">
+        ${run ? `<button class="btn" onclick="tmPause()" aria-label="Jeda">⏸</button>` : `<button class="btn primary" onclick="tmStart()" aria-label="Mula">▶</button>`}
+        <button class="btn" onclick="tmAdd(1)" aria-label="Tambah 1 minit">+1</button>
+        <button class="btn" onclick="tmReset()" aria-label="Set semula">↺</button>
+      </div>
+    </div>
+    <details${view.tmOpen ? ' open' : ''} ontoggle="view.tmOpen=this.open"><summary>Tetapan pemasa</summary>
+      <div class="seg" style="grid-template-columns:repeat(4,1fr);margin:10px 0">${[10, 12, 15, 20].map(m => `<button class="${S.timerMins === m ? 'on' : ''}" onclick="setMins(${m})">${m} min</button>`).join('')}</div>
+      <div class="sw"><div class="hint" style="margin:0">Mula automatik setiap pusingan baharu. Hon berbunyi bila masa tamat, bip 2 minit sebelum.</div>${toggle(S.timerAuto, 'setTimerAuto')}</div>
+    </details>
+  </section>`;
+}
+function setTimerAuto(v){ S.timerAuto = v; save(); }
+function tick(){
+  if (!S || !(view.screen === 'game' || view.screen === 'tv')) return;
+  const ri = S.rounds.length - 1, r = S.rounds[ri]; if (!r) return;
+  const left = tmLeft(r), zero = !!(r.tm && left === 0);
+  document.querySelectorAll('.tmr').forEach(e => { e.textContent = fmtT(left); e.classList.toggle('low', left > 0 && left <= 60000); e.classList.toggle('zero', zero); });
+  const ov = document.getElementById('tvover'); if (ov) ov.style.display = zero && !overHidden.has(ri) ? 'grid' : 'none';
+  if (r.tm && r.tm.run) {
+    if (!r.tm.warn && left > 0 && left <= 120000 && S.timerMins > 2) { r.tm.warn = true; beep(2); if (!TVWIN) save(); }
+    if (left === 0) {
+      r.tm.run = false; r.tm.left = 0; r.tm.horn = true; horn();
+      if (!TVWIN) { save(); toast('⏱ Masa tamat!'); if (view.screen === 'game') render(); }
+    }
+  }
+}
+setInterval(tick, 500);
+
+/* ============ Papan TV / projektor ============ */
+let wakeLock = null;
+async function keepAwake(){ try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } } catch(e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && view.screen === 'tv') keepAwake(); });
+function openTV(){ view.screen = 'tv'; keepAwake(); render(); }
+function exitTV(){ if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); view.screen = 'game'; render(); }
+function fullTV(){ const d = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else if (d.requestFullscreen) d.requestFullscreen().catch(() => toast('Skrin penuh tidak disokong')); }
+function popTV(){
+  const w = window.open(location.pathname + '#tv=' + S.id, 'picklemix-tv', 'popup,width=1280,height=720');
+  if (!w) toast('Benarkan pop-up untuk buka tetingkap TV'); else toast('Seret tetingkap itu ke skrin TV, kemudian tekan ⛶');
+}
+function renderTV(){
+  const ri = S.rounds.length - 1, r = S.rounds[ri], nm = nameMap(), kotc = S.format === 'kotc';
+  const n = r.courts.length, cols = n <= 2 ? n : n <= 4 ? 2 : n <= 6 ? 3 : 4;
+  let board = '';
+  if (scoringOn(S)) {
+    const st = standings(S), team = S.mode !== 'singles' && (S.format === 'rr' || TOUR.has(S.format));
+    const rows = (team ? st.teams : st.players).filter(s => s.mp > 0).slice(0, 8);
+    if (rows.length) board = `<div class="tvbox"><h3>🏆 Kedudukan</h3>${rows.map((s, i) => `<div class="r"><span>${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'} ${esc(team ? teamName(s.ids, nm) : nm[s.key])}</span><b>${s.w}M ${s.pf - s.pa >= 0 ? '+' : ''}${s.pf - s.pa}</b></div>`).join('')}</div>`;
+  }
+  let champ = '';
+  if (TOUR.has(S.format) && S.tour && S.tour.format === S.format) {
+    const R = tourResolve(S, S.rounds.length), all = S.tour.matches.filter(m => !R[m.id].auto);
+    champ = `<div class="tvbox"><h3>📊 Kejohanan</h3><div class="r"><span>Perlawanan selesai</span><b>${all.filter(m => R[m.id].done).length}/${all.length}</b></div></div>`;
+  }
+  const team = (c, sd) => `<div class="t ${scored(c) ? ((sd === 'a') === (c.sa > c.sb) ? 'win' : 'lose') : ''}">${c[sd].map(id => esc(nm[id])).join('<br>')}</div>`;
+  app.innerHTML = `<div class="tv">
+    <header class="tvh">
+      <div><b>${esc(S.name)}</b><span>${FORMATS[S.format]} · ${MODES[S.mode]}</span></div>
+      <div class="tvr">PUSINGAN ${ri + 1}</div>
+      <div class="tmr tvt">${fmtT(tmLeft(r))}</div>
+      <div class="tvbtn">
+        ${TVWIN ? '' : (r.tm && r.tm.run ? `<button onclick="tmPause()" title="Jeda pemasa">⏸</button>` : `<button onclick="tmStart()" title="Mula pemasa">▶</button>`)}
+        <button onclick="audio();beep(1)" title="Uji / aktifkan bunyi">🔊</button>
+        ${TVWIN ? '' : `<button onclick="popTV()" title="Buka di tetingkap/skrin lain">🖥</button>`}
+        <button onclick="fullTV()" title="Skrin penuh">⛶</button>
+        ${TVWIN ? '' : `<button onclick="exitTV()" title="Keluar">✕</button>`}
+      </div>
+    </header>
+    <div class="tvbody">
+      <div class="tvcourts" style="grid-template-columns:repeat(${cols},1fr)">
+        ${r.courts.map((c, i) => `<div class="tvc ${(kotc && i === 0) || (c.label && /Akhir$/.test(c.label)) ? 'king' : ''}">
+          <div class="h"><span>${kotc && i === 0 ? '👑 GELANGGANG RAJA' : 'GELANGGANG ' + (i + 1)}</span><span>${c.label ? esc(c.label) : ''}</span></div>
+          <div class="m">${team(c, 'a')}<div>${scored(c) || Number.isFinite(c.sa) ? `<div class="s">${c.sa ?? 0} : ${c.sb ?? 0}</div>` : '<div class="vs" style="margin:auto">VS</div>'}</div>${team(c, 'b')}</div>
+        </div>`).join('')}
+      </div>
+      <aside class="tvside">
+        <div class="tvbox"><h3>☕ Berehat (${r.rest.length})</h3><div class="tvrest">${r.rest.length ? r.rest.map(id => `<span>${esc(nm[id])}</span>`).join('') : '<span>Tiada</span>'}</div></div>
+        ${champ}${board}
+        <div class="tvfoot">PickleMix · mrsmsas.github.io/picklemix</div>
+      </aside>
+    </div>
+    <div class="tvover" id="tvover" onclick="overHidden.add(${ri});this.style.display='none'">⏱ MASA TAMAT</div>
+  </div>`;
+  tick();
+}
+if (TVWIN) {
+  window.addEventListener('storage', e => {
+    if (e.key !== LS) return;
+    try { db = Object.assign(db, JSON.parse(e.newValue)); db.sessions.forEach(norm); } catch(err) { return; }
+    S = db.sessions.find(s => s.id === location.hash.slice(4)) || S;
+    render();
+  });
+}
+
 /* ============ Render ============ */
 function render(){
-  if (view.screen === 'setup') renderSetup();
+  app.classList.toggle('wide', view.screen === 'tv');
+  if (view.screen === 'tv' && S) renderTV();
+  else if (view.screen === 'setup') renderSetup();
   else if (view.screen === 'game' && S) renderGame();
   else { view.screen = 'home'; renderHome(); }
+}
+if (TVWIN) {
+  S = db.sessions.find(s => s.id === location.hash.slice(4)) || null;
+  if (S) { view.screen = 'tv'; keepAwake(); }
 }
 render();
 
