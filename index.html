@@ -1065,7 +1065,7 @@ function capHint(mode, courts, n){
     (c.spare > 0 ? ` · ${c.spare} gelanggang tidak cukup pemain` : '');
 }
 function go(screen){ view.screen = screen; if (screen === 'home') { S = null; speechCancel(); } render(); window.scrollTo(0, 0); }
-const ymd = ts => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+function ymd(ts){ const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function fmtD(ds){ if (!ds) return ''; const [y, m, d] = ds.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('ms-MY', {weekday:'long', day:'numeric', month:'long', year:'numeric'}); }
 function metaTxt(o){ return [o.date ? '📅 ' + fmtD(o.date) : '', o.venue ? '📍 ' + o.venue : ''].filter(Boolean).join(' · '); }
 function metaLine(o){ const t = metaTxt(o); return t ? `<p class="hint" style="margin:-4px 2px 10px">${esc(t)}</p>` : ''; }
