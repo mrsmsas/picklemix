@@ -20,3 +20,6 @@ Kod sebelum fungsi "Pautan ahli (baca sahaja)" (commit 8597e2e). Pulihkan: `git 
 
 ## v6-pautan-baca-sahaja
 Kod sebelum segerak langsung GAS (commit 7a964c7). Pulihkan: `git checkout 7a964c7 -- index.html sw.js` (naikkan nama cache dalam `sw.js`).
+
+## v7-segerak-gas
+Kod sebelum Putaran Seed menyokong gelanggang kurang (commit 9e63a39). Pulihkan: `git checkout 9e63a39 -- index.html sw.js` (naikkan cache dalam sw.js).

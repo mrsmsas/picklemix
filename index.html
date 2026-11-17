@@ -651,27 +651,32 @@ function smixGen(sess, upto){
 function rotState(sess, upto){
   const act = sess.players.filter(p => p.active);
   const S = act.filter(p => (p.k || 'A') === 'A').map(p => p.id), U = act.filter(p => (p.k || 'A') !== 'A').map(p => p.id);
-  return {S, U, N:S.length, r:Math.max(0, upto - (sess.rrStart || 0))};
+  const N = S.length, M = N / 2, C = Math.max(1, sess.courts || 1), k = M ? Math.ceil(M / C) : 1;   // k = bilangan pusingan fizikal bagi satu putaran penuh
+  return {S, U, N, M, C, k, T:N * k, r:Math.max(0, upto - (sess.rrStart || 0))};
 }
 function rotProblem(sess){
   if (sess.mode !== 'ranked') return 'Format Putaran Seed memerlukan mod Beregu Kumpulan Rank.';
   const R = rotState(sess, 0);
   if (R.N < 2 || R.N !== R.U.length) return `Bilangan seeded (${R.N}) mesti sama dengan unseeded (${R.U.length}). Semak Kump. A = seeded.`;
   if (R.N % 2) return 'Bilangan seeded mesti genap (2, 4, 6…) supaya seeded boleh berlawan sesama seeded.';
-  if (sess.courts < R.N / 2) return `Perlukan sekurang-kurangnya ${R.N / 2} gelanggang.`;
   return '';
 }
 function rotGen(sess, upto){
   if (rotProblem(sess)) return null;
   const R = rotState(sess, upto);
-  if (R.r >= R.N) return {done:true};
-  const courts = [];
-  for (let c = 0; c < R.N / 2; c++) {
+  if (R.r >= R.T) return {done:true};
+  // Putaran logik lr: semua N/2 perlawanan seeded; jika gelanggang kurang, ia dipecah kepada k pusingan dan pasangan lain berehat.
+  const lr = Math.floor(R.r / R.k), j = R.r % R.k;
+  const off = (lr * R.C) % R.M, ord = [];
+  for (let i = 0; i < R.M; i++) ord.push((i + off) % R.M);
+  const play = ord.slice(j * R.C, (j + 1) * R.C).sort((x, y) => x - y), pset = new Set(play);
+  const courts = play.map(c => {
     const a = R.S[2 * c], b = R.S[2 * c + 1];
-    courts.push({a:[a, R.U[(2 * c + R.r) % R.N]], b:[b, R.U[(2 * c + 1 + R.r) % R.N]], sa:null, sb:null,
-      label: c === 0 ? 'Gelanggang seed teratas' : ''});
-  }
-  return {courts, rest:[], ts:Date.now()};
+    return {a:[a, R.U[(2 * c + lr) % R.N]], b:[b, R.U[(2 * c + 1 + lr) % R.N]], sa:null, sb:null, label: c === 0 ? 'Gelanggang seed teratas' : ''};
+  });
+  const rest = [];
+  for (let c = 0; c < R.M; c++) if (!pset.has(c)) rest.push(R.S[2 * c], R.S[2 * c + 1], R.U[(2 * c + lr) % R.N], R.U[(2 * c + 1 + lr) % R.N]);
+  return {courts, rest, ts:Date.now()};
 }
 
 /* ============ Enjin 2: Round Robin (setiap unit lawan semua unit lain sekali) ============ */
@@ -1166,7 +1171,7 @@ function kControls(ctx){
 function gBtn(ctx, p){ return `<button class="g ${p.g}" onclick="toggleG('${ctx}','${p.id}')" title="Jantina">${p.g === 'L' ? '♂ L' : '♀ P'}</button>`; }
 
 function formatDesc(s){
-  if (s.format === 'rot') return 'Seeded kekal di gelanggang masing-masing (P1 lawan P2, P3 lawan P4…), unseeded berputar satu kedudukan setiap pusingan. Setiap seeded berpasangan dengan setiap unseeded tepat sekali. Tamat selepas N pusingan (N = bilangan seeded). Letak seeded di atas senarai (Kump. A).';
+  if (s.format === 'rot') return 'Seeded kekal di gelanggang masing-masing (P1 lawan P2, P3 lawan P4…), unseeded berputar satu kedudukan setiap pusingan. Setiap seeded berpasangan dengan setiap unseeded tepat sekali. Tamat selepas N putaran (N = bilangan seeded); jika gelanggang kurang daripada N/2, setiap putaran dipecah kepada beberapa pusingan dan pasangan lain berehat bergilir. Letak seeded di atas senarai (Kump. A).';
   if (s.format === 'smix') return s.mode === 'singles'
     ? 'Lawan ikut ranking — pemain berdekatan ranking dipadankan, tiada pasangan dalam mod perseorangan.'
     : 'Pemain disusun ikut seed (senarai) dan kemudian kedudukan semasa. Setiap gelanggang ambil 4 pemain berdekatan ranking: ranking 1&4 lawan 2&3 supaya seimbang. Rakan & lawan bertukar setiap pusingan dan tidak diulang selagi boleh. Gelanggang 1 = ranking teratas.';
@@ -1188,8 +1193,8 @@ function tourPreview(s){
   if (s.format === 'rot') {
     const pr = rotProblem(s);
     if (pr) return `<p class="hint" style="color:var(--danger)">⚠ ${pr}</p>`;
-    const N = rotState(s, 0).N;
-    return `<p class="hint">📋 ${N} seeded · ${N} unseeded · ${N} pusingan · ${N * N / 2} perlawanan · ${N} game setiap pemain</p>`;
+    const R = rotState(s, 0), N = R.N;
+    return `<p class="hint">📋 ${N} seeded · ${N} unseeded · ${R.T} pusingan · ${N * N / 2} perlawanan · ${N} game setiap pemain${R.k > 1 ? ` · gelanggang kurang (${R.C} < ${R.M}): ${R.M - R.C > 0 ? 'pasangan berehat bergilir' : ''}` : ''}</p>`;
   }
   if (s.format === 'rrp' && s.mode !== 'singles') {
     const R = rrpState(s, 0);
@@ -1422,10 +1427,10 @@ function matchTab(){
       <div class="prog"><i style="width:${pct}%"></i></div>
       <p class="hint">${R.remaining.length ? `${R.remaining.length} gandingan lagi · anggaran ${Math.ceil(R.remaining.length / R.perRound)} pusingan` : '🎉 Semua pemain telah berganding dengan semua pemain lain'}</p></section>`;
   } else if (S.format === 'rot' && last) {
-    const R = rotState(S, S.rounds.length), cur = Math.min(R.N, R.r), pct = R.N ? Math.round(cur / R.N * 100) : 0;
-    rrCard = `<section class="card"><div class="hrow"><span class="lbl">🔃 Putaran Seed</span><b>${cur}/${R.N} pusingan</b></div>
+    const R = rotState(S, S.rounds.length), cur = Math.min(R.T, R.r), pct = R.T ? Math.round(cur / R.T * 100) : 0;
+    rrCard = `<section class="card"><div class="hrow"><span class="lbl">🔃 Putaran Seed</span><b>${cur}/${R.T} pusingan</b></div>
       <div class="prog"><i style="width:${pct}%"></i></div>
-      <p class="hint">${cur < R.N ? `${R.N - cur} pusingan lagi — setiap seeded berpasangan dengan setiap unseeded sekali` : '🎉 Semua gandingan seeded + unseeded selesai'}</p></section>`;
+      <p class="hint">${cur < R.T ? `${R.T - cur} pusingan lagi — setiap seeded berpasangan dengan setiap unseeded sekali` : '🎉 Semua gandingan seeded + unseeded selesai'}</p></section>`;
   } else if (S.format === 'rr' && last) {
     const R = rrState(S, S.rounds.length);
     const pct = R.total ? Math.round(R.done / R.total * 100) : 0;
@@ -1544,6 +1549,7 @@ function edApply(regen){
     S.locks = S.locks.filter(l => ids.has(l[0]) && ids.has(l[1]));
     if (TOUR.has(S.format)) S.tour = null;
     if (changed) S.dirty = true;
+    if (changed && S.format === 'rot') S.rrStart = regen ? i : S.rounds.length;   // gelanggang/pemain berubah: putaran dimulakan semula
     let msg = changed ? 'Perubahan disimpan — digunakan mulai pusingan seterusnya' : 'Maklumat sesi disimpan';
     if (regen && !TOUR.has(S.format)) {
       const r = makeRound(S, i);
