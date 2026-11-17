@@ -402,6 +402,8 @@ function norm(s){
   if (s.rrStart == null) s.rrStart = 0;
   if (!s.smixRank) s.smixRank = 'live';
   if (!s.ngrp) s.ngrp = 2;
+  if (s.date == null) s.date = ymd(s.created || Date.now());
+  if (s.venue == null) s.venue = '';
   if (s.players) s.players.forEach(p => { if (!p.k) p.k = 'A'; });
   if (!s.tcfg) s.tcfg = {seed:'list', third:true, groups:2, adv:2, swissRounds:4};
   if (s.tour === undefined) s.tour = null;
@@ -1063,6 +1065,10 @@ function capHint(mode, courts, n){
     (c.spare > 0 ? ` · ${c.spare} gelanggang tidak cukup pemain` : '');
 }
 function go(screen){ view.screen = screen; if (screen === 'home') { S = null; speechCancel(); } render(); window.scrollTo(0, 0); }
+const ymd = ts => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+function fmtD(ds){ if (!ds) return ''; const [y, m, d] = ds.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('ms-MY', {weekday:'long', day:'numeric', month:'long', year:'numeric'}); }
+function metaTxt(o){ return [o.date ? '📅 ' + fmtD(o.date) : '', o.venue ? '📍 ' + o.venue : ''].filter(Boolean).join(' · '); }
+function metaLine(o){ const t = metaTxt(o); return t ? `<p class="hint" style="margin:-4px 2px 10px">${esc(t)}</p>` : ''; }
 function fmtDate(ts){ return new Date(ts).toLocaleString('ms-MY', {day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit'}); }
 const teamName = (ids, nm) => ids.map(id => nm[id] ?? '?').join(' & ');
 
@@ -1109,7 +1115,7 @@ function delSession(id){
 
 /* ============ Persediaan sesi ============ */
 function defaultPlayers(n){ return Array.from({length:n}, (_, i) => ({id:uid(), name:'P' + (i + 1), g: i % 2 ? 'P' : 'L', k:'A', active:true})); }
-function newDraft(){ draft = norm({mode:'doubles', courts:2, players:defaultPlayers(8), locks:[], rounds:[]}); view.screen = 'setup'; view.step = 1; render(); window.scrollTo(0, 0); }
+function newDraft(){ draft = norm({mode:'doubles', courts:2, players:defaultPlayers(8), locks:[], rounds:[], date:ymd(Date.now()), venue:''}); view.screen = 'setup'; view.step = 1; render(); window.scrollTo(0, 0); }
 function wStep(d){ view.step = Math.max(1, Math.min(4, (view.step || 1) + d)); render(); window.scrollTo(0, 0); }
 function pickFmt(k){ draft.format = k; if (k === 'rot') { draft.mode = 'ranked'; draft.ngrp = 2; assignK(draft); } wStep(1); }
 function setMode(m){ draft.mode = m; if (m === 'singles') draft.locks = []; if (m === 'ranked') return autoK('draft', draft.ngrp || 2); render(); }
@@ -1319,12 +1325,19 @@ function renderSetup(){
     body = `<div class="wq">Semak & mula</div>
     <section class="card">
       <div class="sum"><span>Format</span><b>${FICON[d.format]} ${FORMATS[d.format]}</b></div>
+      <div class="sum"><span>Tarikh</span><b>${esc(fmtD(d.date) || '—')}</b></div>
+      <div class="sum"><span>Tempat</span><b>${esc(d.venue || '—')}</b></div>
       <div class="sum"><span>Mod</span><b>${MODES[d.mode]}</b></div>
       <div class="sum"><span>Gelanggang</span><b>${d.courts} (${c.used} digunakan)</b></div>
       <div class="sum"><span>Pemain</span><b>${d.players.length}${d.mode === 'mixed' ? ` · ${L} L · ${d.players.length - L} P` : ''}</b></div>
       ${scoringOn(d) ? `<div class="sum"><span>Skor</span><b>Hingga ${d.target}${d.winBy2 ? ', beza 2' : ''}</b></div>` : '<div class="sum"><span>Skor</span><b>Tidak direkod</b></div>'}
       ${d.mode !== 'singles' && d.format !== 'kotc' && d.format !== 'rrp' && d.format !== 'smix' && d.format !== 'rot' ? `<div class="sum"><span>Pasangan tetap</span><b>${d.locks.length}</b></div>` : ''}
     </section>
+    <section class="card"><span class="lbl">Tarikh & tempat</span>
+      <div class="row2" style="margin:0">
+        <div><span class="lbl">Tarikh</span><input type="date" class="inp" style="width:100%" value="${esc(d.date || '')}" onchange="draft.date=this.value;render()"></div>
+        <div><span class="lbl">Tempat</span><input class="inp" style="width:100%" placeholder="cth. Dewan Sukan" value="${esc(d.venue || '')}" onchange="draft.venue=this.value.trim();render()"></div>
+      </div></section>
     ${tourPreview(d)}
     <p class="hint">${formatDesc(d)}</p>`;
   }
@@ -1344,8 +1357,8 @@ function startSession(){
   d.players.forEach((p, i) => { p.name = (p.name || '').trim() || ('P' + (i + 1)); });
   if (capacity(d.mode, d.courts, d.players.length).used < 1) return toast('Pemain tidak mencukupi');
   if (d.format === 'rot') { const pr = rotProblem(d); if (pr) return toast(pr); }
-  S = norm({id:uid(), name:'Sesi ' + fmtDate(Date.now()), created:Date.now(), updated:Date.now(),
-       mode:d.mode, courts:d.courts, format:d.format, smixRank:d.smixRank, ngrp:d.ngrp, target:d.target, winBy2:d.winBy2, scoring:d.scoring, rrStart:0, tcfg:{...d.tcfg}, tour:null,
+  S = norm({id:uid(), name:'Sesi ' + (d.date ? fmtD(d.date).replace(/^\S+,\s*/, '') : fmtDate(Date.now())), created:Date.now(), updated:Date.now(),
+       mode:d.mode, courts:d.courts, format:d.format, smixRank:d.smixRank, ngrp:d.ngrp, date:d.date || ymd(Date.now()), venue:d.venue || '', target:d.target, winBy2:d.winBy2, scoring:d.scoring, rrStart:0, tcfg:{...d.tcfg}, tour:null,
        players:d.players.map(p => ({...p, joined:0})), locks:d.locks.map(l => [...l]), rounds:[], dirty:false});
   const r = makeRound(S, 0);
   if (!r || r.done) return toast('Pemain/pasukan tidak mencukupi');
@@ -1431,6 +1444,7 @@ function matchTab(){
   return `
   ${S.dirty && last ? `<div class="notice">✏️ Perubahan ahli/tetapan disimpan dan akan digunakan mulai pusingan seterusnya.
      <button class="btn" onclick="confirmRegen()">Atau jana semula pusingan ${view.ri + 1} sekarang</button></div>` : ''}
+  ${metaLine(S)}
   <div class="rchips" id="rchips">${S.rounds.map((_, i) => `<button class="${i === view.ri ? 'on' : ''}" onclick="view.ri=${i};render()">Pusingan ${i + 1}</button>`).join('')}</div>
   <div class="rtitle"><b>Pusingan ${view.ri + 1}</b><small>${last ? '● Sedang berlangsung' : 'Sejarah'} · ${S.rounds.length} pusingan</small><button class="btn" style="padding:6px 12px;margin-left:auto" onclick="openEdit()" aria-label="Ubah gelanggang atau pemain">✏️ Ubah</button></div>
   ${last ? timerCard() : ''}
@@ -1459,7 +1473,7 @@ function matchTab(){
 /* ============ Ubah sesi (tambah gelanggang / pemain) ============ */
 let ed = null;
 function openEdit(){
-  ed = {courts:S.courts, ngrp:S.ngrp || 2, players:S.players.map(p => ({...p})), newName:'', newG:'L'};
+  ed = {name:S.name, date:S.date || '', venue:S.venue || '', courts:S.courts, ngrp:S.ngrp || 2, players:S.players.map(p => ({...p})), newName:'', newG:'L'};
   drawEdit();
 }
 function closeEdit(){ const m = document.getElementById('editm'); if (m) m.remove(); ed = null; }
@@ -1472,7 +1486,13 @@ function drawEdit(){
   const tagOf = p => S.mode === 'mixed' ? gTag('ed', p) : S.mode === 'ranked' ? kTag('ed', p) : '';
   m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><h3>✏️ Ubah sesi</h3>
     <div class="mbody">
-      <span class="lbl">Gelanggang</span>${stepper('edCourts', ed.courts)}
+      <span class="lbl">Nama sesi</span>
+      <input class="inp" style="width:100%" value="${esc(ed.name)}" onchange="ed.name=this.value.trim()||ed.name">
+      <div class="row2" style="margin-top:10px">
+        <div><span class="lbl">Tarikh</span><input type="date" class="inp" style="width:100%" value="${esc(ed.date)}" onchange="ed.date=this.value"></div>
+        <div><span class="lbl">Tempat</span><input class="inp" style="width:100%" placeholder="cth. Dewan Sukan" value="${esc(ed.venue)}" onchange="ed.venue=this.value.trim()"></div>
+      </div>
+      <span class="lbl" style="margin-top:12px">Gelanggang</span>${stepper('edCourts', ed.courts)}
       <p class="hint">${capHint(S.mode, ed.courts, act.length)}</p>
       <div class="hrow" style="margin-top:10px"><span class="lbl">Pemain · ${act.length}/${ed.players.length} hadir</span></div>
       ${S.mode === 'ranked' ? kControls('ed') : ''}
@@ -1513,13 +1533,15 @@ function edApply(regen){
   if (S.format === 'rot') { const pr = rotProblem({mode:S.mode, courts:ed.courts, players:ed.players}); if (pr) return toast(pr); }
   const i = S.rounds.length - 1;
   const go2 = () => {
-    const nAdd = ed.players.length - S.players.length, dC = ed.courts - S.courts;
+    const sig = o => JSON.stringify([o.courts, o.players.map(p => [p.id, p.name, p.active, p.g, p.k])]);
+    const changed = sig(ed) !== sig(S);
     S.courts = ed.courts; S.ngrp = ed.ngrp; S.players = ed.players.map(p => ({...p}));
+    S.name = ed.name || S.name; S.date = ed.date; S.venue = ed.venue;
     const ids = new Set(S.players.filter(p => p.active).map(p => p.id));
     S.locks = S.locks.filter(l => ids.has(l[0]) && ids.has(l[1]));
     if (TOUR.has(S.format)) S.tour = null;
-    S.dirty = true;
-    let msg = 'Perubahan disimpan — digunakan mulai pusingan seterusnya';
+    if (changed) S.dirty = true;
+    let msg = changed ? 'Perubahan disimpan — digunakan mulai pusingan seterusnya' : 'Maklumat sesi disimpan';
     if (regen && !TOUR.has(S.format)) {
       const r = makeRound(S, i);
       if (!r || r.done || r.wait) msg = 'Tiada susunan lain untuk pusingan semasa — digunakan mulai pusingan seterusnya';
@@ -1569,6 +1591,7 @@ function schedTab(){
     table = `<table><thead><tr><th>Pemain</th>${S.rounds.map((_, i) => `<th>P${i + 1}</th>`).join('')}<th>Main</th><th>Rehat</th>${sc ? '<th>Menang</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>`;
   }
   return `
+  ${metaLine(S)}
   <div class="rtitle"><b>Jadual</b><small>${S.rounds.length} pusingan · ${S.players.filter(p => p.active).length} pemain</small><button class="btn noprint" style="padding:6px 12px;margin-left:auto" onclick="openEdit()">✏️ Ubah</button></div>
   <div class="seg two noprint" style="margin-bottom:10px">${[['round', 'Ikut pusingan'], ['player', 'Ikut pemain']].map(([k, l]) => `<button class="${v === k ? 'on' : ''}" onclick="view.schedView='${k}';render()">${l}</button>`).join('')}</div>
   <div class="sch">${table}</div>
@@ -1580,7 +1603,7 @@ function schedTab(){
 }
 function schedText(){
   const nm = nameMap(), n = t => t.map(id => nm[id] || '?').join(' & ');
-  const out = [`${S.name} — Jadual perlawanan`];
+  const out = [`${S.name} — Jadual perlawanan`]; if (metaTxt(S)) out.push(metaTxt(S));
   S.rounds.forEach((r, ri) => {
     out.push('', `Pusingan ${ri + 1}`);
     r.courts.forEach((c, ci) => out.push(`Gel.${ci + 1}: ${n(c.a)} lawan ${n(c.b)}${scored(c) ? ` (${c.sa}-${c.sb})` : ''}`));
@@ -1695,7 +1718,7 @@ async function shareText(text){
 }
 function shareRound(){
   const r = S.rounds[view.ri], nm = nameMap();
-  shareText(`🏓 ${S.name}\n${FORMATS[S.format]} · Pusingan ${view.ri + 1}\n\n${roundLines(r).join('\n')}\n\nBerehat: ${r.rest.length ? r.rest.map(id => nm[id]).join(', ') : '-'}`);
+  shareText(`🏓 ${S.name}${metaTxt(S) ? '\n' + metaTxt(S) : ''}\n${FORMATS[S.format]} · Pusingan ${view.ri + 1}\n\n${roundLines(r).join('\n')}\n\nBerehat: ${r.rest.length ? r.rest.map(id => nm[id]).join(', ') : '-'}`);
 }
 
 /* ============ Pengumuman suara ============ */
@@ -1779,7 +1802,7 @@ function shareRank(){
   const nm = nameMap(), {players, teams} = standings(S);
   const team = S.mode !== 'singles' && S.format !== 'kotc' && view.rankView === 'team';
   const rows = (team ? teams : players).filter(s => s.mp > 0);
-  shareText(`🏆 Kedudukan — ${S.name}\n${FORMATS[S.format]}\n\n` + rows.map((s, i) =>
+  shareText(`🏆 Kedudukan — ${S.name}${metaTxt(S) ? '\n' + metaTxt(S) : ''}\n${FORMATS[S.format]}\n\n` + rows.map((s, i) =>
     `${i + 1}. ${team ? teamName(s.ids, nm) : nm[s.key]} — ${s.w}M ${s.l}K (${s.pf - s.pa >= 0 ? '+' : ''}${s.pf - s.pa})`).join('\n'));
 }
 
@@ -1862,6 +1885,10 @@ function membersTab(){
   <section class="card">
     <span class="lbl">Nama sesi</span>
     <input class="inp" style="width:100%" value="${esc(S.name)}" onchange="S.name=this.value.trim()||S.name;save();render()">
+    <div class="row2" style="margin-top:10px">
+      <div><span class="lbl">Tarikh</span><input type="date" class="inp" style="width:100%" value="${esc(S.date || '')}" onchange="S.date=this.value;save();render()"></div>
+      <div><span class="lbl">Tempat</span><input class="inp" style="width:100%" placeholder="cth. Dewan Sukan" value="${esc(S.venue || '')}" onchange="S.venue=this.value.trim();save();render()"></div>
+    </div>
   </section>`;
 }
 function stepCourtsS(d){ const v = Math.max(1, Math.min(8, S.courts + d)); if (v === S.courts) return; S.courts = v; markDirty(); }
@@ -1983,7 +2010,7 @@ function renderTV(){
   const team = (c, sd) => `<div class="t ${scored(c) ? ((sd === 'a') === (c.sa > c.sb) ? 'win' : 'lose') : ''}">${c[sd].map(id => esc(nm[id])).join('<br>')}</div>`;
   app.innerHTML = `<div class="tv">
     <header class="tvh">
-      <div><b>${esc(S.name)}</b><span>${FORMATS[S.format]} · ${MODES[S.mode]}</span></div>
+      <div><b>${esc(S.name)}</b><span>${FORMATS[S.format]} · ${MODES[S.mode]}${metaTxt(S) ? ' · ' + esc(metaTxt(S)) : ''}</span></div>
       <div class="tvr">PUSINGAN ${ri + 1}</div>
       <div class="tmr tvt">${fmtT(tmLeft(r))}</div>
       <div class="tvbtn">
