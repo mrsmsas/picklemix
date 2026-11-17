@@ -1,0 +1,1991 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PickleMix</title>
+<meta name="description" content="Penjana perlawanan pickleball yang adil — Mix & Match, Round Robin, Raja Gelanggang, dengan skor & kedudukan.">
+<meta name="theme-color" content="#0e121a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PickleMix">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+/* Tema aplikasi: gelap + aksen limau (seperti aplikasi sukan di App Store / Play Store) */
+:root{
+  color-scheme:dark;
+  --bg:#0e121a;--card:#1a202b;--card2:#232a37;--ink:#f3f5f8;--mut:#8a94a6;--line:#2a3242;
+  --pri:#d4f34a;--pri-ink:#12160a;--pri-soft:rgba(212,243,74,.12);--ball:#d4f34a;--ball-ink:#12160a;
+  --danger:#ff6b5b;--warn:#ffc35a;--l:#5aa9ff;--p:#ff6fae;--gold:#f5c542;--silver:#c0c7d2;--bronze:#d08a4e;--shadow:none;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+#app{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.bar{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;
+  padding:calc(10px + env(safe-area-inset-top)) 12px 10px;background:var(--pri);color:var(--pri-ink)}
+.bar h1{margin:0;font-size:18px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar h1 small{display:block;font-size:12px;font-weight:500;opacity:.85}
+.ic{width:40px;height:40px;border:0;border-radius:12px;background:rgba(255,255,255,.14);font-size:22px;line-height:1;color:inherit}
+main{flex:1;padding:14px 16px 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.lbl{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.hint{color:var(--mut);font-size:13px;margin:10px 0 0}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hrow .lbl{margin:0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);padding:4px;border-radius:12px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:9px 4px;font-size:13px;font-weight:600;color:var(--mut)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow);outline:1px solid var(--line)}
+.seg.two{grid-template-columns:1fr 1fr}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.step button{width:44px;height:44px;border:0;background:var(--bg);font-size:20px;font-weight:700}
+.step b{flex:1;text-align:center;font-size:18px}
+.plist{display:grid;gap:6px;margin-top:10px}
+.prow{display:flex;align-items:center;gap:8px}
+.prow .num{width:26px;text-align:right;color:var(--mut);font-size:13px;font-variant-numeric:tabular-nums}
+.prow input,.inp{flex:1;min-width:0;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:var(--bg)}
+.prow input:focus,.inp:focus,select:focus,.score input:focus{outline:2px solid var(--pri);outline-offset:-1px}
+.g{height:42px;min-width:52px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-weight:700;font-size:13px}
+.g.L{color:var(--l)} .g.P{color:var(--p)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 14px;font-weight:600}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.btn.ball{background:var(--ball);border-color:var(--ball);color:var(--ball-ink)}
+.btn.danger{color:var(--danger)}
+.btn.big{width:100%;padding:15px;font-size:16px;border-radius:14px}
+.btn:disabled{opacity:.4;cursor:default}
+.link{border:0;background:none;color:var(--pri);font-weight:600;padding:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:13px;font-weight:600}
+.chip button{border:0;background:none;padding:0 0 0 2px;color:var(--mut);font-size:15px;line-height:1}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.L{background:var(--l)} .dot.P{background:var(--p)}
+.lockadd{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-top:10px}
+select{height:42px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:0 8px;min-width:0}
+/* game */
+.rnav{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;margin-bottom:12px}
+.rnav button{height:48px;border:1px solid var(--line);background:var(--card);border-radius:14px;font-size:22px}
+.rnav button:disabled{opacity:.3}
+.rnav div{text-align:center}
+.rnav b{display:block;font-size:22px}
+.rnav small{color:var(--mut)}
+.court{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.court.king{border-color:var(--gold)}
+.ctitle{display:flex;justify-content:space-between;padding:8px 14px;background:var(--pri-soft);font-weight:700;font-size:13px;letter-spacing:.03em;color:var(--pri)}
+.court.king .ctitle{color:var(--gold)}
+.teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:14px 14px 10px}
+.team{display:grid;gap:4px;text-align:center;border-radius:12px;padding:6px 2px;transition:background .2s}
+.team span{font-weight:700;font-size:17px;word-break:break-word}
+.team.win{background:var(--pri-soft)}
+.team.win:after{content:"🏆 MENANG";font-size:11px;font-weight:800;color:var(--pri);letter-spacing:.05em}
+.team.lose{opacity:.6}
+.vs{width:36px;height:36px;border-radius:50%;background:var(--ball);color:var(--ball-ink);display:grid;place-items:center;font-weight:800;font-size:12px}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:0 14px 12px}
+.score input{width:100%;height:46px;border:1px solid var(--line);border-radius:12px;background:var(--bg);text-align:center;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.score span{color:var(--mut);font-weight:700;width:36px;text-align:center;font-size:12px}
+.swarn{padding:0 14px 10px;font-size:12px;color:var(--warn);text-align:center;min-height:0}
+.swarn:empty{display:none}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+.acts .btn{padding:11px 4px;font-size:13px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tg{position:relative;width:48px;height:28px;flex:none}
+.tg input{opacity:0;width:0;height:0}
+.tg span{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:.2s}
+.tg span:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tg input:checked+span{background:var(--pri)}
+.tg input:checked+span:before{transform:translateX(20px)}
+.notice{background:var(--pri-soft);border:1px solid var(--pri);border-radius:14px;padding:12px;margin-bottom:12px;font-size:14px}
+.notice .btn{margin-top:8px;width:100%}
+.prog{height:8px;border-radius:99px;background:var(--bg);overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--pri);border-radius:99px}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.dock .in{max-width:640px;margin:0 auto}
+.dock .cta{padding:10px 16px 0}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs button{border:0;background:none;padding:8px 0 10px;font-size:12px;font-weight:600;color:var(--mut)}
+.tabs button i{display:block;font-style:normal;font-size:20px}
+.tabs button.on{color:var(--pri)}
+/* stats & rank */
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.kpi{background:var(--bg);border-radius:12px;padding:10px}
+.kpi b{display:block;font-size:20px}
+.kpi small{color:var(--mut);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 4px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+td.nm{text-align:left;font-weight:600}
+tr.pl{cursor:pointer}
+tr.det td{text-align:left;font-size:13px;color:var(--mut);background:var(--bg)}
+.off{opacity:.45;text-decoration:line-through}
+.pos{color:var(--pri)} .neg{color:var(--danger)}
+.podium{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end;margin-bottom:4px}
+.pod{background:var(--bg);border-radius:14px;padding:10px 6px;text-align:center}
+.pod .m{font-size:26px}
+.pod b{display:block;font-size:14px;word-break:break-word}
+.pod small{color:var(--mut);font-size:12px}
+.pod.p1{padding-top:18px;outline:2px solid var(--gold)}
+.kbtn{width:48px;height:46px;border:1px solid var(--ball);background:var(--ball);color:var(--ball-ink);border-radius:12px;font-size:16px;line-height:1;display:grid;place-items:center;padding:2px}
+.kbtn small{font-size:8px;font-weight:800;letter-spacing:.04em}
+.kteams{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.kteams button{min-height:54px;border:1px solid var(--line);background:var(--bg);border-radius:12px;font-weight:700;padding:6px}
+.kteams button.on{background:var(--ball);border-color:var(--ball);color:var(--ball-ink)}
+.kgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+.kgrid button{height:48px;border:1px solid var(--line);background:var(--bg);border-radius:10px;font-weight:800;font-size:18px}
+.kgrid button:disabled{opacity:.35}
+.bracket{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.bcol{min-width:160px;flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:8px}
+.bcol h4{margin:0;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);text-align:center}
+.mbox{border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:13px;overflow:hidden}
+.mbox.fin{border-color:var(--gold)}
+.mbox div{display:flex;justify-content:space-between;gap:6px;padding:6px 8px}
+.mbox div+div{border-top:1px solid var(--line)}
+.mbox div span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mbox .w{font-weight:800;color:var(--pri)}
+.mbox small{display:block;padding:3px 8px 6px;color:var(--mut);font-size:11px;border-top:1px solid var(--line)}
+.champ{text-align:center;border-color:var(--gold)}
+.champ b{display:block;font-size:22px;margin-top:2px}
+.tbig{font-size:52px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:.02em;margin:6px 0 10px;border-radius:14px}
+.tmr.low{color:var(--danger)}
+.tmr.zero{background:var(--danger);color:#fff;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.55}}
+/* papan TV */
+#app.wide{max-width:none}
+.tv{min-height:100vh;background:#08110e;color:#eef6f1;display:flex;flex-direction:column;padding:2vh 2vw;gap:2vh}
+.tvh{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:2vw}
+.tvh b{display:block;font-size:clamp(18px,2.4vw,40px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tvh span{color:#93a59c;font-size:clamp(12px,1.3vw,22px)}
+.tvr{font-weight:900;font-size:clamp(18px,2.6vw,46px);color:#e9e21b}
+.tvt{font-variant-numeric:tabular-nums;font-weight:900;font-size:clamp(36px,6vw,110px);line-height:1;padding:.08em .35em;border-radius:.2em;background:#15201c}
+.tvt.low{color:#fb923c}
+.tvbtn{white-space:nowrap}
+.tvbtn button{background:#15201c;border:1px solid #26352f;color:#eef6f1;border-radius:10px;font-size:clamp(14px,1.5vw,26px);padding:.35em .6em;margin-left:.3em}
+.tvbody{flex:1;display:grid;grid-template-columns:1fr minmax(220px,24vw);gap:2vw;min-height:0}
+.tvcourts{display:grid;gap:1.5vw;align-content:start}
+.tvc{background:#15201c;border:2px solid #26352f;border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.tvc.king{border-color:#facc15}
+.tvc .h{background:#123a34;color:#2dd4bf;font-weight:800;padding:.5em .8em;font-size:clamp(12px,1.3vw,24px);display:flex;justify-content:space-between;gap:1em}
+.tvc.king .h{color:#facc15}
+.tvc .m{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1vw;padding:1.6vw 1vw;flex:1}
+.tvc .t{text-align:center;font-weight:800;font-size:clamp(16px,2.2vw,46px);line-height:1.25;overflow-wrap:break-word;min-width:0}
+.tvc .t.win{color:#2dd4bf} .tvc .t.lose{opacity:.55}
+.tvc .s{font-size:clamp(20px,3vw,64px);font-weight:900;color:#e9e21b;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tvc .vs{width:clamp(36px,3.5vw,70px);height:clamp(36px,3.5vw,70px);font-size:clamp(12px,1.2vw,22px)}
+.tvside{display:flex;flex-direction:column;gap:1.5vw;min-height:0}
+.tvbox{background:#15201c;border-radius:16px;padding:1vw 1.2vw}
+.tvbox h3{margin:0 0 .5em;font-size:clamp(14px,1.4vw,26px);color:#93a59c}
+.tvbox .r{display:flex;justify-content:space-between;gap:1em;font-size:clamp(13px,1.3vw,24px);padding:.3em 0;border-bottom:1px solid #26352f}
+.tvbox .r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvrest{display:flex;flex-wrap:wrap;gap:.5vw}
+.tvrest span{background:#0b1310;border-radius:99px;padding:.3em .8em;font-size:clamp(12px,1.2vw,22px)}
+.tvfoot{margin-top:auto;color:#5b6b64;font-size:clamp(11px,1vw,18px);text-align:right}
+.tvover{position:fixed;inset:0;display:none;place-items:center;background:rgba(194,65,12,.88);font-size:clamp(48px,10vw,200px);font-weight:900;color:#fff;z-index:40;animation:blink 1s infinite;cursor:pointer;text-align:center}
+@media (max-width:800px){.tvbody{grid-template-columns:1fr}.tvh{grid-template-columns:1fr auto}.tvh>div:first-child{grid-column:1/-1}}
+@media (max-width:600px){.tvcourts{grid-template-columns:1fr !important}.tvc .t{font-size:20px}.tvh .tvbtn{grid-column:1/-1}}
+/* home */
+.hero{padding:26px 16px 8px;text-align:center}
+.logo{width:72px;height:72px;margin:0 auto 8px}
+.hero h2{margin:0;font-size:26px}
+.hero p{margin:4px 0 0;color:var(--mut)}
+.sess{display:flex;align-items:center;gap:10px}
+.sess .t{flex:1;min-width:0}
+.sess .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sess .t small{color:var(--mut)}
+.empty{text-align:center;color:var(--mut);padding:18px 0}
+.foot{text-align:center;color:var(--mut);font-size:12px;padding:8px 0 20px}
+/* modal & toast */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto}
+.sheet h3{margin:0 0 8px}
+.mbody{color:var(--mut);font-size:14px}
+.mbody ul{padding-left:18px;margin:8px 0}
+.mbtns{display:grid;gap:8px;margin-top:14px}
+.toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:90vw;text-align:center}
+@media (min-width:520px){.modal{align-items:center}.sheet{border-radius:20px}}
+
+/* ===== Tema v3: gaya aplikasi (gelap + limau) — peraturan di bawah mengatasi yang di atas ===== */
+html,body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.bar{background:rgba(14,18,26,.94);backdrop-filter:blur(12px);color:var(--ink);border-bottom:1px solid var(--line)}
+.bar h1{font-size:16px;font-weight:700}
+.bar h1 small{color:var(--mut);opacity:1;font-weight:500}
+.ic{background:var(--card);color:var(--ink);font-size:20px;border:1px solid var(--line)}
+.card{border-radius:20px;box-shadow:none}
+.lbl{font-weight:600;letter-spacing:.07em}
+.seg{background:var(--card2)}
+.seg button.on{background:var(--pri);color:var(--pri-ink);outline:0;box-shadow:none;font-weight:800}
+.step{background:var(--card2)} .step button{background:transparent;color:var(--pri)}
+.prow input,.inp,select{background:var(--card2)}
+.btn{background:var(--card2);border-radius:14px}
+.btn.primary,.btn.ball{background:var(--pri);border-color:var(--pri);color:var(--pri-ink);font-weight:800}
+.btn.danger{color:var(--danger)}
+.chip{background:var(--card2)}
+.notice{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--pri)}
+.dock{background:rgba(14,18,26,.94);backdrop-filter:blur(12px)}
+.tabs button{font-weight:600}
+.tabs button i{filter:grayscale(1);opacity:.7}
+.tabs button.on i{filter:none;opacity:1}
+.modal{background:rgba(0,0,0,.65)}
+.sheet{border:1px solid var(--line)}
+.toast{background:var(--pri);color:var(--pri-ink);font-weight:700}
+.vs{background:var(--card2);color:var(--mut);border:1px solid var(--line)}
+.tg span{background:var(--card2);border:1px solid var(--line)}
+.tg input:checked+span:before{background:var(--pri-ink)}
+.kpi,.prog,.mbox,.pod{background:var(--card2)}
+.team.win{background:var(--pri-soft)}
+.court.king{border-color:var(--gold)}
+/* cip pusingan */
+.rchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.rchips::-webkit-scrollbar{display:none}
+.rchips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px}
+.rchips button.on{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}
+.rtitle{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px 12px}
+.rtitle{flex-wrap:wrap;gap:4px 10px}
+.rtitle b{font-size:24px;font-weight:800;white-space:nowrap}
+.trow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.trow .tbig{font-size:42px;margin:2px 0 0;text-align:left;padding:0 6px;line-height:1.1}
+.tbtns{display:flex;gap:6px}
+.tbtns .btn{width:46px;height:46px;padding:0;font-size:17px}
+details summary{color:var(--mut);font-size:13px;font-weight:600;cursor:pointer;margin-top:8px}
+.rtitle small{color:var(--mut)}
+/* kad perlawanan */
+.court{border-radius:20px;box-shadow:none}
+.ctitle{background:transparent;color:var(--pri);font-size:11.5px;padding:12px 16px 0;letter-spacing:.08em;text-transform:uppercase}
+.ctitle span:last-child{color:var(--mut)}
+.court.king .ctitle span:first-child{color:var(--gold)}
+.mrow{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:12px 14px 14px}
+.side{display:grid;gap:8px;min-width:0}
+.side.r .pl{flex-direction:row-reverse;text-align:right}
+.pl{display:flex;align-items:center;gap:8px;min-width:0}
+.pl .nm{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;background:var(--card2);color:var(--ink);border:2px solid var(--line)}
+.av.L{border-color:var(--l);color:var(--l)} .av.P{border-color:var(--p);color:var(--p)}
+.side.win .nm{color:var(--pri)} .side.lose{opacity:.5}
+.side small{font-size:11px}
+.sbox{border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:8px 10px 6px;min-width:96px;font-weight:900;font-size:26px;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.1}
+.sbox small{display:block;font-size:9.5px;font-weight:800;color:var(--pri);letter-spacing:.08em;margin-top:3px}
+.sbox.empty{font-size:15px;color:var(--mut);padding:12px 10px 8px}
+/* papan kekunci skor */
+.kscore{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-top:12px}
+.kt{border:2px solid var(--line);background:var(--card2);border-radius:16px;padding:10px 8px;text-align:center;cursor:pointer;min-width:0}
+.kt.on{border-color:var(--pri)}
+.kt small{color:var(--mut);font-weight:700;font-size:10.5px;letter-spacing:.07em;display:block}
+.kt b{display:block;font-size:13px;margin:2px 0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kt .kn{font-size:42px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
+.kt.on .kn{color:var(--pri)}
+.kcolon{font-size:30px;font-weight:900;color:var(--mut)}
+.kstat{text-align:center;margin:10px 0 2px;font-weight:700;color:var(--pri);min-height:21px;font-size:14px}
+.kstat.warn{color:var(--warn)}
+.kgrid button{background:var(--card2);border-color:var(--line);color:var(--ink)}
+.kgrid button.on{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}
+/* kedudukan */
+.lb td{padding:10px 4px;vertical-align:middle}
+.lb .nm small{display:block;color:var(--mut);font-size:11px;font-weight:500}
+.rk{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--card2);font-size:12px;font-weight:800}
+.rk.r1{background:var(--gold);color:#1a1300} .rk.r2{background:var(--silver);color:#15181d} .rk.r3{background:var(--bronze);color:#1d1006}
+.lb th.pts,.lb td.pts{background:var(--pri-soft);color:var(--pri);font-weight:800;text-align:center}
+.winner{text-align:center;padding:18px;border-color:var(--pri)}
+.winner .cup{font-size:44px;line-height:1}
+.winner .t{font-size:12px;color:var(--mut);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.winner b{display:block;font-size:22px;margin-top:2px}
+.winner .h{font-weight:800;font-size:16px}
+/* wizard & pilihan */
+.wprog{height:4px;background:var(--card2);border-radius:99px;overflow:hidden;margin:12px 16px 0}
+.wprog i{display:block;height:100%;background:var(--pri);border-radius:99px;transition:width .3s}
+.wq{font-size:22px;font-weight:800;margin:4px 2px 14px}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px;color:var(--ink);cursor:pointer}
+.opt.on{border-color:var(--pri);background:linear-gradient(var(--pri-soft),var(--pri-soft)),var(--card)}
+.opt .oi{flex:none;width:44px;height:44px;border-radius:13px;background:var(--card2);display:grid;place-items:center;font-size:22px}
+.opt.on .oi{background:var(--pri)}
+.opt .ot{flex:1;min-width:0}
+.opt b{display:block;font-size:15px}
+.opt small{color:var(--mut);font-size:12.5px;line-height:1.35;display:block;margin-top:2px}
+.opt .chev{color:var(--mut);font-size:22px}
+.wnav{display:grid;grid-template-columns:1fr 2fr;gap:10px;padding:10px 16px}
+.sum{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.sum:last-child{border-bottom:0}
+.sum span{color:var(--mut)} .sum b{text-align:right}
+/* peserta */
+.part{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.part:last-child{border-bottom:0}
+.part input{flex:1;min-width:0;background:transparent;border:0;height:38px;font-weight:600;padding:0 6px;border-radius:8px}
+.part input:focus{background:var(--card2);outline:1px solid var(--pri)}
+.part.out{opacity:.5}
+.chk{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--mut);background:transparent;display:grid;place-items:center;color:var(--pri-ink);font-weight:900;font-size:14px;padding:0}
+.chk.on{background:var(--pri);border-color:var(--pri)}
+.gtag{flex:none;font-size:11px;font-weight:800;padding:4px 9px;border-radius:99px;border:1px solid;background:transparent}
+.gtag.L{color:var(--l);border-color:var(--l)} .gtag.P{color:var(--p);border-color:var(--p)}
+.gtag.kA{color:var(--gold);border-color:var(--gold)} .gtag.kB{color:var(--l);border-color:var(--l)} .gtag.kC{color:var(--p);border-color:var(--p)} .gtag.kD{color:var(--silver);border-color:var(--silver)}
+/* laman utama */
+.hero{padding:calc(26px + env(safe-area-inset-top)) 16px 8px;text-align:left;display:flex;align-items:center;gap:14px}
+.hero .logo{margin:0;width:54px;height:54px;flex:none}
+.hero h2{font-size:26px;font-weight:900;letter-spacing:-.02em}
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.stat b{display:block;font-size:22px;font-weight:800}
+.stat small{color:var(--mut);font-size:11.5px}
+/* papan TV — aksen limau */
+.tv{background:#0e121a}
+.tvc,.tvbox,.tvt,.tvbtn button{background:#1a202b;border-color:#2a3242}
+.tvc .h{background:#232a37;color:#d4f34a}
+.tvc .t.win,.tvr{color:#d4f34a}
+.tvc .s{color:#d4f34a}
+.tvrest span{background:#232a37}
+.tabs{grid-template-columns:repeat(5,1fr)}
+.tabs button{font-size:11px}
+.sch{overflow:auto;max-height:calc(100vh - 230px);border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.sch table{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%}
+.sch th,.sch td{padding:8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top;text-align:left}
+.sch thead th{position:sticky;top:0;background:var(--card2);z-index:2;font-weight:800;white-space:nowrap}
+.sch tbody th{position:sticky;left:0;background:var(--card);z-index:1;font-weight:800;white-space:nowrap}
+.sch thead th:first-child{left:0;z-index:3}
+.sch tr.cur th,.sch td.cur{background:var(--pri-soft)}
+.sch tbody tr{cursor:pointer}
+.sch .t{display:block;white-space:nowrap}
+.sch .vs{display:block;color:var(--mut);font-size:10px}
+.sch .sc{display:block;font-weight:800;color:var(--pri);margin-top:2px}
+.sch .rest{color:var(--mut)}
+.sch .w{color:var(--pri);font-weight:800} .sch .l{color:var(--danger);font-weight:800}
+.sch td.pc{min-width:74px}
+@media print{.dock,.bar,.acts,.noprint{display:none!important}.sch{overflow:visible;max-height:none;border:0}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* ============ Data & storage ============ */
+const LS = 'picklemix_v1';
+const MODES = {doubles:'Beregu', singles:'Perseorangan', mixed:'Beregu Campuran', ranked:'Beregu Kumpulan Rank'};
+const GRP = ['A', 'B', 'C', 'D'];
+const grpMode = m => m === 'mixed' || m === 'ranked';
+const grpOf = (sess, p) => sess.mode === 'ranked' ? (p.k || 'A') : p.g;
+const FORMATS = {mix:'Mix & Match', smix:'Mix Seeded', rrp:'Tukar Pasangan', rr:'Round Robin', kotc:'Raja Gelanggang', se:'Kalah Mati', pool:'Kumpulan + Kalah Mati', swiss:'Swiss'};
+const TOUR = new Set(['se', 'pool', 'swiss']);
+const FICON = {mix:'🔀', smix:'🎯', rrp:'🔄', rr:'🔁', kotc:'👑', se:'🏆', pool:'🗂️', swiss:'♟️'};
+const FSHORT = {mix:'Rakan & lawan bertukar setiap pusingan secara adil',
+  smix:'Mix & Match ikut seed/ranking — pemain kuat berganding dengan yang lemah, gelanggang atas untuk ranking teratas',
+  rrp:'Round robin individu — pasangan bertukar setiap game, setiap pemain berganding dengan semua pemain lain sekali',
+  rr:'Pasukan/pemain tetap — semua berlawan dengan semua, tepat sekali',
+  kotc:'Menang naik gelanggang, kalah turun', se:'Kalah sekali terus terkeluar — dengan carta bracket',
+  pool:'Peringkat kumpulan, kemudian kalah mati', swiss:'Rekod sama berlawan — tiada siapa tersingkir'};
+const MICON = {singles:'👤', doubles:'👥', mixed:'⚤', ranked:'🏅'};
+const MSHORT = {singles:'1 lawan 1 — setiap pemain dikira secara individu', doubles:'2 lawan 2 — rakan bertukar atau pasukan tetap',
+  mixed:'Beregu dengan pasangan Lelaki + Perempuan',
+  ranked:'Pemain dibahagi ikut kumpulan rank (A, B…) — pasangan mesti dari kumpulan berbeza, cth. Seed + Biasa'};
+const initials = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const CANDIDATES = 150;
+let db = {sessions:[], settings:{autoAnnounce:false}};
+try { const raw = localStorage.getItem(LS); if (raw) db = Object.assign(db, JSON.parse(raw)); } catch(e) {}
+let S = null;                 // sesi semasa
+let draft = null;             // draf sesi baharu
+let view = {screen:'home', tab:'match', ri:0, open:null, rankView:'ind'};
+
+const app = document.getElementById('app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const pk = (a, b) => a < b ? a + '|' + b : b + '|' + a;
+const qk = ids => [...ids].sort().join('|');
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// Lengkapkan medan untuk sesi lama (sebelum v2)
+function norm(s){
+  if (!s.format) s.format = 'mix';
+  if (s.target == null) s.target = 11;
+  if (s.winBy2 == null) s.winBy2 = true;
+  if (s.scoring == null) s.scoring = true;
+  if (s.rrStart == null) s.rrStart = 0;
+  if (!s.smixRank) s.smixRank = 'live';
+  if (!s.ngrp) s.ngrp = 2;
+  if (s.players) s.players.forEach(p => { if (!p.k) p.k = 'A'; });
+  if (!s.tcfg) s.tcfg = {seed:'list', third:true, groups:2, adv:2, swissRounds:4};
+  if (s.tour === undefined) s.tour = null;
+  if (s.timerMins == null) s.timerMins = 15;
+  if (s.timerAuto == null) s.timerAuto = false;
+  return s;
+}
+db.sessions.forEach(norm);
+
+function save(){
+  if (S) {
+    S.updated = Date.now();
+    const i = db.sessions.findIndex(x => x.id === S.id);
+    if (i < 0) db.sessions.unshift(S); else db.sessions[i] = S;
+  }
+  try { localStorage.setItem(LS, JSON.stringify(db)); } catch(e) {}
+}
+const perCourt = mode => mode === 'singles' ? 2 : 4;
+function capacity(mode, courts, n){
+  const per = perCourt(mode), used = Math.min(courts, Math.floor(n / per));
+  return {per, used, playing: used * per, rest: n - used * per, spare: courts - used};
+}
+const scored = c => Number.isFinite(c.sa) && Number.isFinite(c.sb) && c.sa !== c.sb;
+const scoringOn = s => s.format === 'kotc' || TOUR.has(s.format) || s.scoring;
+const mustScore = s => s.format === 'kotc' || TOUR.has(s.format);
+
+/* ============ Statistik sejarah ============ */
+function bump(st, id, f, o){ const s = st[id]; if (s) s[f][o] = (s[f][o] || 0) + 1; }
+function computeStats(sess, upto){
+  const st = {};
+  sess.players.forEach(p => st[p.id] = {played:0, rests:0, eligible:0, partners:{}, opps:{}});
+  const partner = {}, opp = {}, quad = {}, restPair = {};
+  let lastRest = new Set(), lastPartner = new Set(), lastOpp = new Set(), b2b = 0;
+  sess.rounds.slice(0, upto).forEach(r => {
+    const lp = new Set(), lo = new Set();
+    r.courts.forEach(c => {
+      const all = [...c.a, ...c.b];
+      all.forEach(id => { const s = st[id]; if (s) { s.played++; s.eligible++; } });
+      [c.a, c.b].forEach(t => { if (t.length === 2) {
+        const k = pk(t[0], t[1]); partner[k] = (partner[k] || 0) + 1; lp.add(k);
+        bump(st, t[0], 'partners', t[1]); bump(st, t[1], 'partners', t[0]);
+      }});
+      c.a.forEach(x => c.b.forEach(y => { const k = pk(x, y); opp[k] = (opp[k] || 0) + 1; lo.add(k);
+        bump(st, x, 'opps', y); bump(st, y, 'opps', x); }));
+      if (all.length === 4) { const k = qk(all); quad[k] = (quad[k] || 0) + 1; }
+    });
+    r.rest.forEach(id => { const s = st[id]; if (s) { s.rests++; s.eligible++; } if (lastRest.has(id)) b2b++; });
+    for (let i = 0; i < r.rest.length; i++) for (let j = i + 1; j < r.rest.length; j++) {
+      const k = pk(r.rest[i], r.rest[j]); restPair[k] = (restPair[k] || 0) + 1; }
+    lastRest = new Set(r.rest); lastPartner = lp; lastOpp = lo;
+  });
+  return {st, partner, opp, quad, restPair, lastRest, lastPartner, lastOpp, b2b};
+}
+
+/* ============ Enjin 1: Mix & Match (150 calon, pilih skor terbaik) ============ */
+function greedyPair(list, cost){
+  const pool = [...list], out = [];
+  while (pool.length >= 2) {
+    const x = pool.shift();
+    let bi = 0, bc = Infinity;
+    pool.forEach((y, i) => { const c = cost(x, y) + Math.random() * 2; if (c < bc) { bc = c; bi = i; } });
+    out.push([x, pool.splice(bi, 1)[0]]);
+  }
+  return out;
+}
+
+function generate(sess, upto){
+  const T = computeStats(sess, upto);
+  const act = sess.players.filter(p => p.active);
+  const cap = capacity(sess.mode, sess.courts, act.length);
+  if (cap.used < 1) return null;
+  const per = cap.per, mixed = grpMode(sess.mode);
+  const gOf = {}; act.forEach(p => gOf[p.id] = grpOf(sess, p));
+  const actSet = new Set(act.map(p => p.id));
+  const locks = per === 2 ? [] : sess.locks.filter(l => actSet.has(l[0]) && actSet.has(l[1]));
+  const lockedSet = new Set(locks.map(l => pk(l[0], l[1])));
+  const lockedIds = new Set(locks.flat());
+  const units = [...locks.map(l => ({ids:[...l], lock:true})),
+                 ...act.filter(p => !lockedIds.has(p.id)).map(p => ({ids:[p.id]}))];
+  const known = act.map(p => T.st[p.id]).filter(s => s.eligible > 0).map(s => s.played / s.eligible);
+  const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 1;
+  const ratio = id => { const s = T.st[id]; return s.eligible ? s.played / s.eligible : avg; };
+  // Jika yang berehat >= yang bermain (cth. 8 pemain, 1 gelanggang), peraturan "tiada rehat
+  // berturut-turut" yang ketat akan mengunci dua kumpulan sama bergilir. Longgarkan supaya semua bertemu.
+  const soft = cap.rest >= cap.playing;
+  const B2B_PR = soft ? 0.25 : 5, B2B_SC = soft ? 12 : 500;
+
+  let best = null, bestSc = Infinity;
+  for (let it = 0; it < CANDIDATES; it++) {
+    const ord = units.map(u => ({u, pr: u.ids.reduce((a, id) => a + ratio(id), 0) / u.ids.length
+        + Math.random() * 0.3 - (u.ids.some(id => T.lastRest.has(id)) ? B2B_PR : 0)}))
+      .sort((a, b) => b.pr - a.pr);
+    const rest = [], play = []; let need = cap.rest;
+    for (const o of ord) {
+      if (o.u.ids.length <= need) { rest.push(...o.u.ids); need -= o.u.ids.length; } else play.push(o.u);
+    }
+    if (need > 0) {
+      const i = play.findIndex(u => u.lock);
+      if (i >= 0) { const u = play.splice(i, 1)[0]; rest.push(u.ids[0]); play.push({ids:[u.ids[1]]}); }
+    }
+    let courts;
+    if (per === 2) {
+      const pool = shuffle(play.flatMap(u => u.ids));
+      courts = greedyPair(pool, (x, y) => { const k = pk(x, y); return (T.opp[k] || 0) * 10 + (T.lastOpp.has(k) ? 20 : 0); })
+        .map(([x, y]) => ({a:[x], b:[y]}));
+    } else {
+      const teams = play.filter(u => u.lock).map(u => [...u.ids]);
+      const pool = shuffle(play.filter(u => !u.lock).flatMap(u => u.ids));
+      teams.push(...greedyPair(pool, (x, y) => {
+        const k = pk(x, y);
+        let c = (T.partner[k] || 0) * 12 + (T.lastPartner.has(k) ? 40 : 0);
+        if (mixed && gOf[x] === gOf[y]) c += 30;
+        return c;
+      }));
+      shuffle(teams);
+      courts = greedyPair(teams.map((t, i) => i), (i, j) => {
+        let c = 0;
+        teams[i].forEach(x => teams[j].forEach(y => { const k = pk(x, y); c += (T.opp[k] || 0) * 3 + (T.lastOpp.has(k) ? 5 : 0); }));
+        return c + (T.quad[qk([...teams[i], ...teams[j]])] || 0) * 25;
+      }).map(([i, j]) => ({a:teams[i], b:teams[j]}));
+    }
+    let sc = 0;
+    rest.forEach(id => { if (T.lastRest.has(id)) sc += B2B_SC; sc += (1 - ratio(id)) * 30; });
+    for (let i = 0; i < rest.length; i++) for (let j = i + 1; j < rest.length; j++) {
+      const k = pk(rest[i], rest[j]); sc += (T.restPair[k] || 0) * 4; }
+    courts.forEach(c => {
+      [c.a, c.b].forEach(t => { if (t.length === 2) {
+        const k = pk(t[0], t[1]), n = T.partner[k] || 0;
+        if (!lockedSet.has(k)) sc += n * n * 10 + (T.lastPartner.has(k) ? 40 : 0);
+        if (mixed && gOf[t[0]] === gOf[t[1]] && !lockedSet.has(k)) sc += 30;
+      }});
+      c.a.forEach(x => c.b.forEach(y => { const k = pk(x, y), n = T.opp[k] || 0;
+        sc += n * (per === 2 ? 10 : 3) + (T.lastOpp.has(k) ? (per === 2 ? 20 : 5) : 0); }));
+      if (per === 4) sc += (T.quad[qk([...c.a, ...c.b])] || 0) * 25;
+    });
+    if (sc < bestSc) { bestSc = sc; best = {courts, rest}; }
+  }
+  return {courts: best.courts.map(c => ({...c, sa:null, sb:null})), rest: best.rest, ts: Date.now()};
+}
+
+/* ============ Enjin 1b: Mix Seeded (Mix & Match berdasarkan seed / ranking) ============ */
+// Senarai pemain = seed (atas = terkuat). Pusingan 1 ikut seed; pusingan seterusnya (mod 'live') ikut kedudukan semasa,
+// dengan seed sebagai nilai awal. Setiap 4 pemain berdekatan ranking dikumpul satu gelanggang (Gel. 1 = ranking teratas):
+// ranking 1&4 lawan 2&3 supaya seimbang. Gandingan rakan/lawan/kumpulan berulang dielak seperti Mix & Match biasa.
+function smixOrder(sess, upto){
+  const n = sess.players.length, seed = {}, A = {};
+  sess.players.forEach((p, i) => { seed[p.id] = i; A[p.id] = {w:0, mp:0, d:0}; });
+  if (sess.smixRank !== 'seed') sess.rounds.slice(0, upto).forEach(r => r.courts.forEach(c => {
+    if (!scored(c)) return;
+    const aw = c.sa > c.sb;
+    [[c.a, aw, c.sa - c.sb], [c.b, !aw, c.sb - c.sa]].forEach(([t, w, d]) => t.forEach(id => {
+      const a = A[id]; if (a) { a.mp++; if (w) a.w++; a.d += d; } }));
+  }));
+  const K = 1.5, val = id => { const a = A[id], s0 = 0.8 - 0.6 * seed[id] / Math.max(1, n - 1);
+    return {r: (a.w + K * s0) / (a.mp + K), d: a.mp ? a.d / a.mp : 0}; };
+  return sess.players.map(p => p.id).sort((x, y) => {
+    const a = val(x), b = val(y);
+    return (b.r - a.r) || (b.d - a.d) || (seed[x] - seed[y]);
+  });
+}
+function smixGen(sess, upto){
+  const act = sess.players.filter(p => p.active);
+  const cap = capacity(sess.mode, sess.courts, act.length);
+  if (cap.used < 1) return null;
+  const per = cap.per, mixed = grpMode(sess.mode), seedMode = sess.smixRank === 'seed';
+  const T = computeStats(sess, upto);
+  const actSet = new Set(act.map(p => p.id));
+  const order = smixOrder(sess, upto).filter(id => actSet.has(id));
+  const pos = {}; order.forEach((id, i) => pos[id] = i);
+  const gOf = {}; act.forEach(p => gOf[p.id] = grpOf(sess, p));
+  const known = act.map(p => T.st[p.id]).filter(s => s.eligible > 0).map(s => s.played / s.eligible);
+  const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 1;
+  const ratio = id => { const s = T.st[id]; return s.eligible ? s.played / s.eligible : avg; };
+  const soft = cap.rest >= cap.playing;
+  const B2B_PR = soft ? 0.25 : 5, B2B_SC = soft ? 12 : 500;
+  const pc = (x, y) => { const k = pk(x, y); return (T.partner[k] || 0) ** 2 * 100 + (T.lastPartner.has(k) ? 60 : 0) + (mixed && gOf[x] === gOf[y] ? 400 : 0); };
+  const oc = (x, y) => { const k = pk(x, y); return (T.opp[k] || 0) * (per === 2 ? 12 : 8) + (T.lastOpp.has(k) ? 10 : 0); };
+  const OPTS = [[[0, 3], [1, 2], 0], [[0, 2], [1, 3], 1], [[0, 1], [2, 3], 3]];   // [pasukan A, pasukan B, ketakseimbangan]
+  let best = null, bestSc = Infinity;
+  for (let it = 0; it < CANDIDATES; it++) {
+    const rest = cap.rest ? act.map(p => ({id:p.id, v: ratio(p.id) + Math.random() * (mixed && per === 4 ? 1.2 : 0.3) - (T.lastRest.has(p.id) ? B2B_PR : 0)}))
+      .sort((a, b) => b.v - a.v).slice(0, cap.rest).map(o => o.id) : [];
+    const rs = new Set(rest);
+    if (mixed && per === 4) {   // mod kumpulan rank: bina pasukan lintas-kumpulan (rank kuat + rank lemah)
+      const pool = order.filter(id => !rs.has(id)), teams = [], noise = it === 0 ? 0 : 30;
+      if (it > 0) shuffle(pool);
+      let sc = 0;
+      const gc = {}; pool.forEach(id => gc[gOf[id]] = (gc[gOf[id]] || 0) + 1);
+      Object.values(gc).forEach(n => { if (n * 2 > pool.length) sc += (n * 2 - pool.length) * 300; });   // kumpulan terlalu ramai di gelanggang = pasangan sekumpulan tak dapat dielak
+      while (pool.length >= 2) {
+        const x = pool.shift(); let bi = 0, bc = Infinity;
+        pool.forEach((y, i) => { const c = pc(x, y) + 1.5 * (order.length - 1 - pos[y]) + Math.random() * noise; if (c < bc) { bc = c; bi = i; } });
+        const y = pool.splice(bi, 1)[0]; teams.push([x, y]); sc += pc(x, y);
+      }
+      teams.sort((a, b) => (pos[a[0]] + pos[a[1]]) - (pos[b[0]] + pos[b[1]]));
+      const courts = [];
+      for (let g = 0; g < cap.used; g++) {
+        const A = teams[2 * g], B = teams[2 * g + 1];
+        sc += Math.abs((pos[A[0]] + pos[A[1]]) - (pos[B[0]] + pos[B[1]])) * 4;
+        A.forEach(x => B.forEach(y => { sc += oc(x, y); }));
+        sc += (T.quad[qk([...A, ...B])] || 0) * 25;
+        courts.push({a:A, b:B, sa:null, sb:null, label:g === 0 ? 'Gelanggang ranking teratas' : ''});
+      }
+      rest.forEach(id => { if (T.lastRest.has(id)) sc += B2B_SC; sc += (1 - ratio(id)) * 30; });
+      for (let i = 0; i < rest.length; i++) for (let j = i + 1; j < rest.length; j++) sc += (T.restPair[pk(rest[i], rest[j])] || 0) * 4;
+      if (sc < bestSc) { bestSc = sc; best = {courts, rest}; }
+      continue;
+    }
+    const sigma = it === 0 ? 0 : seedMode ? 2.5 : 2;
+    const arr = order.filter(id => !rs.has(id)).map((id, i) => ({id, i, k: i + (sigma ? (Math.random() * 2 - 1) * sigma : 0)}))
+      .sort((a, b) => a.k - b.k);
+    let sc = 0;
+    arr.forEach((o, idx) => { sc += Math.abs(idx - o.i) * 3; });
+    const courts = [];
+    for (let g = 0; g < cap.used; g++) {
+      const ids = arr.slice(g * per, (g + 1) * per).map(o => o.id);
+      let bc = Infinity, bt = null;
+      if (per === 2) {
+        bc = oc(ids[0], ids[1]); bt = {a:[ids[0]], b:[ids[1]]};
+      } else {
+        OPTS.forEach(([ta, tb, imb]) => {
+          const A = ta.map(i => ids[i]), B = tb.map(i => ids[i]);
+          let c = pc(A[0], A[1]) + pc(B[0], B[1]) + imb * 8 + Math.random() * 2;
+          A.forEach(x => B.forEach(y => { c += oc(x, y); }));
+          if (c < bc) { bc = c; bt = {a:A, b:B}; }
+        });
+        bc += (T.quad[qk(ids)] || 0) * 25;
+      }
+      sc += bc;
+      courts.push({...bt, sa:null, sb:null, label:'Ranking ' + (g * per + 1) + '–' + ((g + 1) * per)});
+    }
+    rest.forEach(id => { if (T.lastRest.has(id)) sc += B2B_SC; sc += (1 - ratio(id)) * 30; });
+    for (let i = 0; i < rest.length; i++) for (let j = i + 1; j < rest.length; j++) sc += (T.restPair[pk(rest[i], rest[j])] || 0) * 4;
+    if (sc < bestSc) { bestSc = sc; best = {courts, rest}; }
+  }
+  return {courts: best.courts, rest: best.rest, ts: Date.now()};
+}
+
+/* ============ Enjin 2: Round Robin (setiap unit lawan semua unit lain sekali) ============ */
+// Unit = pemain (perseorangan) atau pasukan tetap (beregu). Pemain tanpa pasangan dipasangkan ikut urutan.
+function rrUnits(sess){
+  const act = sess.players.filter(p => p.active);
+  if (sess.mode === 'singles') return {units: act.map(p => [p.id]), extra: [], newLocks: []};
+  const actSet = new Set(act.map(p => p.id));
+  const locks = sess.locks.filter(l => actSet.has(l[0]) && actSet.has(l[1])).map(l => [...l]);
+  const used = new Set(locks.flat());
+  let free = act.filter(p => !used.has(p.id));
+  const newLocks = [];
+  if (sess.mode === 'ranked') {
+    const gs = {}; free.forEach(p => (gs[p.k || 'A'] = gs[p.k || 'A'] || []).push(p));
+    for (;;) {
+      const ks = Object.keys(gs).filter(k => gs[k].length).sort((a, b) => gs[b].length - gs[a].length);
+      if (ks.length < 2) break;
+      newLocks.push([gs[ks[0]].shift().id, gs[ks[1]].shift().id]);
+    }
+    free = Object.values(gs).flat();
+  }
+  if (sess.mode === 'mixed') {
+    const L = free.filter(p => p.g === 'L'), P = free.filter(p => p.g === 'P');
+    while (L.length && P.length) newLocks.push([L.shift().id, P.shift().id]);
+    free = [...L, ...P];
+  }
+  while (free.length >= 2) newLocks.push([free.shift().id, free.shift().id]);
+  return {units: [...locks, ...newLocks], extra: free.map(p => p.id), newLocks};
+}
+function rrState(sess, upto){
+  const {units, extra, newLocks} = rrUnits(sess);
+  const ukey = units.map(u => qk(u)), idx = {};
+  ukey.forEach((k, i) => idx[k] = i);
+  const played = new Set(), games = units.map(() => 0);
+  sess.rounds.slice(sess.rrStart || 0, upto).forEach(r => r.courts.forEach(c => {
+    const ka = qk(c.a), kb = qk(c.b);
+    if (ka in idx && kb in idx && !played.has(pk(ka, kb))) { played.add(pk(ka, kb)); games[idx[ka]]++; games[idx[kb]]++; }
+  }));
+  const remaining = [];
+  for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++)
+    if (!played.has(pk(ukey[i], ukey[j]))) remaining.push([i, j]);
+  const total = units.length * (units.length - 1) / 2;
+  const maxM = Math.max(1, Math.min(sess.courts, Math.floor(units.length / 2)));
+  return {units, extra, newLocks, games, remaining, total, done: total - remaining.length, maxM};
+}
+function rrGen(sess, upto){
+  const R = rrState(sess, upto);
+  if (R.units.length < 2) return null;
+  if (!R.remaining.length) return {done:true};
+  sess.locks.push(...R.newLocks);
+  const lastRest = new Set(upto > 0 ? sess.rounds[upto - 1].rest : []);
+  const restedLast = R.units.map(u => u.some(id => lastRest.has(id)));
+  const left = R.units.map(() => 0);
+  R.remaining.forEach(([i, j]) => { left[i]++; left[j]++; });
+  let best = null, bestSc = -Infinity;
+  for (let it = 0; it < CANDIDATES; it++) {
+    const ord = R.remaining.map(m => ({m, p: (restedLast[m[0]] ? 3 : 0) + (restedLast[m[1]] ? 3 : 0)
+      + (left[m[0]] + left[m[1]]) * 0.7 + Math.random() * 2})).sort((a, b) => b.p - a.p);
+    const busy = new Set(), pick = [];
+    for (const o of ord) {
+      if (pick.length >= R.maxM) break;
+      const [i, j] = o.m; if (busy.has(i) || busy.has(j)) continue;
+      busy.add(i); busy.add(j); pick.push(o.m);
+    }
+    let sc = pick.length * 1000;
+    R.units.forEach((u, i) => { if (!busy.has(i)) { if (restedLast[i]) sc -= 60; sc -= left[i] * 2; } });
+    if (sc > bestSc) { bestSc = sc; best = pick; }
+  }
+  const inPlay = new Set(best.flatMap(([i, j]) => [...R.units[i], ...R.units[j]]));
+  return {
+    courts: shuffle(best).map(([i, j]) => ({a:[...R.units[i]], b:[...R.units[j]], sa:null, sb:null})),
+    rest: sess.players.filter(p => p.active && !inPlay.has(p.id)).map(p => p.id),
+    ts: Date.now()
+  };
+}
+
+/* ============ Enjin 2b: Round Robin Tukar Pasangan (round robin individu) ============ */
+// Sasaran: setiap gandingan rakan yang dibenarkan (semua pasangan pemain; beregu campuran: L+P sahaja)
+// dimainkan tepat sekali. Setiap pusingan pilih gandingan yang belum dimainkan, kemudian temukan
+// pasukan supaya lawan juga berbeza. Tamat bila semua gandingan selesai.
+function rrpState(sess, upto){
+  const act = sess.players.filter(p => p.active), mixed = grpMode(sess.mode);
+  const allowed = [];
+  for (let i = 0; i < act.length; i++) for (let j = i + 1; j < act.length; j++)
+    if (!mixed || grpOf(sess, act[i]) !== grpOf(sess, act[j])) allowed.push(pk(act[i].id, act[j].id));
+  const used = {};
+  sess.rounds.slice(sess.rrStart || 0, upto).forEach(r => r.courts.forEach(c => [c.a, c.b].forEach(t => {
+    if (t.length === 2) { const k = pk(t[0], t[1]); used[k] = (used[k] || 0) + 1; } })));
+  const remaining = allowed.filter(k => !used[k]);
+  const cap = capacity(sess.mode, sess.courts, act.length);
+  const perRound = Math.max(1, cap.used * 2);
+  return {act, allowed, used, remaining, total: allowed.length, done: allowed.length - remaining.length, perRound, cap};
+}
+function rrpGen(sess, upto){
+  const R = rrpState(sess, upto);
+  if (R.cap.used < 1) return null;
+  if (!R.remaining.length) return {done:true};
+  const T = computeStats(sess, upto), need = R.cap.used * 2;
+  const left = {}; R.act.forEach(p => left[p.id] = 0);
+  R.remaining.forEach(k => { const [a, b] = k.split('|'); left[a]++; left[b]++; });
+  const gOf = {}; R.act.forEach(p => gOf[p.id] = grpOf(sess, p));
+  const known = R.act.map(p => T.st[p.id]).filter(s => s.eligible > 0).map(s => s.played / s.eligible);
+  const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 1;
+  const ratio = id => { const s = T.st[id]; return s.eligible ? s.played / s.eligible : avg; };
+  const soft = R.cap.rest >= R.cap.playing;
+  let best = null, bestSc = -Infinity;
+  for (let it = 0; it < CANDIDATES; it++) {
+    // 1) pilih gandingan baharu yang tidak bertindih — utamakan pemain yang paling banyak gandingan tertinggal / baru berehat
+    const ord = R.remaining.map(k => { const [a, b] = k.split('|');
+      return {a, b, p: left[a] + left[b] + (T.lastRest.has(a) ? 6 : 0) + (T.lastRest.has(b) ? 6 : 0) + Math.random() * 4}; })
+      .sort((x, y) => y.p - x.p);
+    const busy = new Set(), teams = [];
+    for (const o of ord) { if (teams.length >= need) break; if (busy.has(o.a) || busy.has(o.b)) continue; busy.add(o.a); busy.add(o.b); teams.push([o.a, o.b]); }
+    const fresh = teams.length;
+    // 2) jika tidak cukup, isi gelanggang dengan gandingan ulangan yang paling jarang
+    if (teams.length < need) {
+      const free = shuffle(R.act.map(p => p.id).filter(id => !busy.has(id)))
+        .sort((a, b) => (T.lastRest.has(b) ? 1 : 0) - (T.lastRest.has(a) ? 1 : 0) || ratio(a) - ratio(b));
+      const pool = free.slice(0, (need - teams.length) * 2);
+      teams.push(...greedyPair(pool, (x, y) => (R.used[pk(x, y)] || 0) * 10 + (grpMode(sess.mode) && gOf[x] === gOf[y] ? 30 : 0)));
+      pool.forEach(id => busy.add(id));
+    }
+    // 3) temukan pasukan — elak lawan berulang
+    shuffle(teams);
+    const courts = greedyPair(teams.map((t, i) => i), (i, j) => {
+      let c = 0; teams[i].forEach(x => teams[j].forEach(y => { const k = pk(x, y); c += (T.opp[k] || 0) * 4 + (T.lastOpp.has(k) ? 6 : 0); }));
+      return c + (T.quad[qk([...teams[i], ...teams[j]])] || 0) * 25;
+    }).map(([i, j]) => ({a:teams[i], b:teams[j], sa:null, sb:null}));
+    const rest = R.act.map(p => p.id).filter(id => !busy.has(id));
+    let sc = fresh * 100;
+    rest.forEach(id => { if (T.lastRest.has(id)) sc -= soft ? 12 : 400; sc -= (1 - ratio(id)) * 30 + left[id] * 2; });
+    courts.forEach(c => { c.a.forEach(x => c.b.forEach(y => { sc -= (T.opp[pk(x, y)] || 0) * 3; }));
+      sc -= (T.quad[qk([...c.a, ...c.b])] || 0) * 25; });
+    if (sc > bestSc) { bestSc = sc; best = {courts, rest}; }
+  }
+  return {courts: best.courts, rest: best.rest, ts: Date.now()};
+}
+
+/* ============ Enjin 3: Raja Gelanggang (King of the Court) ============ */
+// Pemenang naik satu gelanggang, yang kalah turun. Gelanggang 1 = gelanggang raja.
+// Yang kalah di gelanggang paling bawah berehat; pemain yang paling lama berehat masuk.
+function kotcGen(sess, upto){
+  const prev = sess.rounds[upto - 1];
+  const act = sess.players.filter(p => p.active), actSet = new Set(act.map(p => p.id));
+  const cap = capacity(sess.mode, sess.courts, act.length);
+  if (cap.used < 1) return null;
+  const per = cap.per, used = cap.used;
+  const T = computeStats(sess, upto);
+  const slots = Array.from({length: used}, () => []);
+  const goRest = [];
+  const put = (ids, i) => { if (i < used) slots[i].push(...ids); else goRest.push(...ids); };
+  prev.courts.forEach((c, i) => {
+    const aw = c.sa > c.sb, W = aw ? c.a : c.b, L = aw ? c.b : c.a;
+    put(W, Math.min(Math.max(0, i - 1), used - 1));
+    if (i + 1 < used) put(L, i + 1);
+    else if (cap.rest > 0) goRest.push(...L);
+    else put(L, Math.min(i, used - 1));
+  });
+  // buang pemain yang sudah keluar, limpahan gelanggang -> rehat
+  for (let i = 0; i < used; i++) {
+    slots[i] = slots[i].filter(id => actSet.has(id));
+    while (slots[i].length > per) goRest.push(slots[i].pop());
+  }
+  const placed = new Set([...slots.flat(), ...goRest]);
+  const lastPlayed = {};
+  sess.rounds.slice(0, upto).forEach((r, ri) => r.courts.forEach(c => [...c.a, ...c.b].forEach(id => lastPlayed[id] = ri)));
+  const queue = act.filter(p => !placed.has(p.id)).map(p => p.id)
+    .sort((a, b) => (lastPlayed[a] ?? -1) - (lastPlayed[b] ?? -1))
+    .concat(goRest.filter(id => actSet.has(id)));
+  for (let i = used - 1; i >= 0; i--) while (slots[i].length < per && queue.length) slots[i].push(queue.shift());
+  const splits = [[[0,1],[2,3]], [[0,2],[1,3]], [[0,3],[1,2]]];
+  const courts = slots.map(s => {
+    if (per === 2) return {a:[s[0]], b:[s[1]], sa:null, sb:null};
+    let best = null, bc = Infinity;
+    splits.forEach(([x, y]) => {
+      const ta = [s[x[0]], s[x[1]]], tb = [s[y[0]], s[y[1]]];
+      let c = Math.random();
+      [ta, tb].forEach(t => { const k = pk(t[0], t[1]); c += (T.partner[k] || 0) * 10 + (T.lastPartner.has(k) ? 50 : 0); });
+      if (grpMode(sess.mode)) [ta, tb].forEach(t => { const g = id => { const q = sess.players.find(p => p.id === id); return q ? grpOf(sess, q) : null; }; if (g(t[0]) === g(t[1])) c += 30; });
+      if (c < bc) { bc = c; best = {a:ta, b:tb, sa:null, sb:null}; }
+    });
+    return best;
+  });
+  return {courts, rest: queue, ts: Date.now()};
+}
+
+/* ============ Enjin 4: Kejohanan — Kalah Mati / Kumpulan + Kalah Mati / Swiss ============ */
+// Unit (pemain/pasukan) dikunci bila kejohanan bermula. Perlawanan disimpan dalam S.tour.matches;
+// keputusan dikira semula dari skor gelanggang (c.mid) setiap kali — skor boleh dibetulkan.
+const tid = T => 'm' + (T.matches.length + 1);
+function seedPositions(size){ let a = [1]; while (a.length < size) { const m = a.length * 2; a = a.flatMap(s => [s, m + 1 - s]); } return a; }
+function addKO(T, seeds, third){
+  T.koBuilt = true;
+  const n = seeds.length; if (n < 2) return;
+  let size = 1; while (size < n) size *= 2;
+  let slots = seedPositions(size).map(s => s <= n ? {u:seeds[s - 1]} : {bye:true});
+  let rnd = 1; const semis = [];
+  while (slots.length > 1) {
+    const k = slots.length / 2;
+    const name = k === 1 ? 'Akhir' : k === 2 ? 'Separuh Akhir' : k === 4 ? 'Suku Akhir' : 'Pusingan ' + (k * 2);
+    const next = [];
+    for (let i = 0; i < k; i++) {
+      const m = {id:tid(T), stage:'ko', rnd, label: k === 1 ? name : `${name} ${i + 1}`, a:slots[2 * i], b:slots[2 * i + 1]};
+      T.matches.push(m); next.push({w:m.id}); if (k === 2) semis.push(m.id);
+      if (k === 1) m.final = true;
+    }
+    slots = next; rnd++;
+  }
+  if (third && semis.length === 2) T.matches.push({id:tid(T), stage:'ko', rnd:rnd - 1, label:'Tempat Ke-3', third:true, a:{l:semis[0]}, b:{l:semis[1]}});
+}
+function tourBuild(sess){
+  const {units, extra, newLocks} = rrUnits(sess);
+  sess.locks.push(...newLocks);
+  const cfg = sess.tcfg, seeds = units.map((_, i) => i);
+  if (cfg.seed === 'random') shuffle(seeds);
+  const T = {format:sess.format, units, seeds, extra, matches:[], start:sess.rounds.length, koBuilt:false, swissRound:0, groups:null};
+  if (sess.format === 'se') addKO(T, seeds, cfg.third);
+  if (sess.format === 'pool') {
+    const G = Math.max(1, Math.min(cfg.groups, Math.floor(units.length / 2)));
+    const groups = Array.from({length:G}, () => []);
+    seeds.forEach((u, i) => { const r = Math.floor(i / G), c = i % G; groups[r % 2 ? G - 1 - c : c].push(u); }); // susunan ular
+    T.groups = groups;
+    groups.forEach((g, gi) => { for (let i = 0; i < g.length; i++) for (let j = i + 1; j < g.length; j++)
+      T.matches.push({id:tid(T), stage:'pool', group:gi, rnd:0, label:'Kumpulan ' + 'ABCDEFGH'[gi], a:{u:g[i]}, b:{u:g[j]}}); });
+  }
+  sess.tour = T;
+}
+function tourResolve(sess, upto){
+  const T = sess.tour, byId = {}, played = {}, out = {};
+  T.matches.forEach(m => byId[m.id] = m);
+  sess.rounds.slice(0, upto).forEach((r, ri) => r.courts.forEach(c => { if (c.mid) played[c.mid] = {c, ri}; }));
+  const get = id => {
+    if (out[id]) return out[id];
+    const m = byId[id];
+    const side = s => s.u != null ? s.u : s.bye ? 'bye' : s.w ? get(s.w).winner : get(s.l).loser;
+    const a = side(m.a), b = side(m.b), p = played[id];
+    const o = {a, b, winner:null, loser:null, auto:false, sched:!!p, c:p ? p.c : null};
+    if (a === 'bye' && b === 'bye') { o.winner = o.loser = 'bye'; o.auto = true; }
+    else if (a === 'bye' && b != null) { o.winner = b; o.loser = 'bye'; o.auto = true; }
+    else if (b === 'bye' && a != null) { o.winner = a; o.loser = 'bye'; o.auto = true; }
+    else if (p && scored(p.c)) { const aw = p.c.sa > p.c.sb; o.winner = aw ? p.c.ua : p.c.ub; o.loser = aw ? p.c.ub : p.c.ua; }
+    o.ready = !o.auto && !p && a != null && b != null;
+    o.done = o.winner != null;
+    return out[id] = o;
+  };
+  T.matches.forEach(m => get(m.id));
+  return out;
+}
+function tableFor(sess, R, unitList, filter){
+  const rows = unitList.map(u => ({u, mp:0, w:0, l:0, pf:0, pa:0})), by = {};
+  rows.forEach(r => by[r.u] = r);
+  sess.tour.matches.filter(filter).forEach(m => {
+    const o = R[m.id]; if (!o.done) return;
+    if (o.auto) { const r = by[o.winner]; if (r) { r.mp++; r.w++; } return; } // bye = menang
+    const c = o.c;
+    [[c.ua, c.sa, c.sb], [c.ub, c.sb, c.sa]].forEach(([u, f, a]) => { const r = by[u]; if (!r) return;
+      r.mp++; r.pf += f; r.pa += a; u === o.winner ? r.w++ : r.l++; });
+  });
+  return rows.sort((a, b) => (b.w - a.w) || ((b.pf - b.pa) - (a.pf - a.pa)) || (b.pf - a.pf));
+}
+const groupTable = (sess, R, gi) => tableFor(sess, R, sess.tour.groups[gi], m => m.stage === 'pool' && m.group === gi);
+const swissTable = (sess, R) => tableFor(sess, R, sess.tour.units.map((_, i) => i), m => m.stage === 'swiss');
+function tourAdvance(sess, upto){
+  const T = sess.tour; let R = tourResolve(sess, upto);
+  if (T.format === 'pool' && !T.koBuilt) {
+    const pool = T.matches.filter(m => m.stage === 'pool');
+    if (pool.every(m => R[m.id].done)) {
+      const tables = T.groups.map((g, gi) => groupTable(sess, R, gi)), seeds = [];
+      for (let k = 0; k < Math.max(1, sess.tcfg.adv); k++) tables.forEach(t => { if (t[k]) seeds.push(t[k].u); });
+      addKO(T, seeds, sess.tcfg.third);
+      R = tourResolve(sess, upto);
+    }
+  }
+  if (T.format === 'swiss') {
+    const sw = T.matches.filter(m => m.stage === 'swiss');
+    if (sw.every(m => R[m.id].done) && T.swissRound < sess.tcfg.swissRounds) {
+      T.swissRound++;
+      const met = new Set(), hadBye = new Set();
+      sw.forEach(m => { const o = R[m.id]; if (o.auto) hadBye.add(o.winner); else met.add(pk(o.a, o.b)); });
+      let order = T.swissRound === 1 ? [...T.seeds] : swissTable(sess, R).map(r => r.u);
+      const label = 'Swiss P' + T.swissRound;
+      if (order.length % 2) { // bye kepada kedudukan terendah yang belum pernah dapat bye
+        let bi = order.length - 1; while (bi > 0 && hadBye.has(order[bi])) bi--;
+        const u = order.splice(bi, 1)[0];
+        T.matches.push({id:tid(T), stage:'swiss', rnd:T.swissRound, label, a:{u}, b:{bye:true}});
+      }
+      if (T.swissRound === 1) { // separuh atas lawan separuh bawah
+        const h = order.length / 2;
+        for (let i = 0; i < h; i++) T.matches.push({id:tid(T), stage:'swiss', rnd:1, label, a:{u:order[i]}, b:{u:order[i + h]}});
+      } else {
+        // carian berundur: pasangkan kedudukan berdekatan tanpa ulangan lawan
+        let steps = 0;
+        const solve = list => {
+          if (!list.length) return [];
+          if (++steps > 50000) return null;
+          const [x, ...rest] = list;
+          for (let j = 0; j < rest.length; j++) {
+            if (met.has(pk(x, rest[j]))) continue;
+            const sub = solve(rest.filter((_, k) => k !== j));
+            if (sub) return [[x, rest[j]], ...sub];
+          }
+          return null;
+        };
+        let pairs = solve(order);
+        if (!pairs) { pairs = []; while (order.length >= 2) pairs.push([order.shift(), order.shift()]); }
+        pairs.forEach(([x, y]) => T.matches.push({id:tid(T), stage:'swiss', rnd:T.swissRound, label, a:{u:x}, b:{u:y}}));
+      }
+      R = tourResolve(sess, upto);
+    }
+  }
+  return R;
+}
+function tourChampion(sess, R){
+  const T = sess.tour;
+  if (T.format === 'swiss') { const t = swissTable(sess, R); return t.length ? t[0].u : null; }
+  const fin = T.matches.find(m => m.final);
+  if (fin) { const w = R[fin.id].winner; return typeof w === 'number' ? w : null; }
+  if (T.format === 'pool') { const t = groupTable(sess, R, 0); return t.length ? t[0].u : null; }
+  return null;
+}
+function tourGen(sess, upto){
+  if (!sess.tour || sess.tour.format !== sess.format) tourBuild(sess);
+  const T = sess.tour;
+  if (T.units.length < 2) return null;
+  const R = tourAdvance(sess, upto);
+  const games = T.units.map(() => 0);
+  Object.values(R).forEach(o => { if (o.sched) { games[o.a]++; games[o.b]++; } });
+  const ready = T.matches.map((m, i) => ({m, i, o:R[m.id]})).filter(x => x.o.ready)
+    .sort((x, y) => (x.m.rnd - y.m.rnd) || ((x.m.third ? 0 : 1) - (y.m.third ? 0 : 1))
+      || ((games[x.o.a] + games[x.o.b]) - (games[y.o.a] + games[y.o.b])) || (x.i - y.i));
+  if (!ready.length) {
+    if (T.matches.some(m => R[m.id].sched && !R[m.id].done)) return {wait:true};
+    return {done:true, champ:tourChampion(sess, R)};
+  }
+  const busy = new Set(), pick = [];
+  for (const x of ready) {
+    if (pick.length >= sess.courts) break;
+    if (busy.has(x.o.a) || busy.has(x.o.b)) continue;
+    busy.add(x.o.a); busy.add(x.o.b); pick.push(x);
+  }
+  const courts = pick.map(x => ({a:[...T.units[x.o.a]], b:[...T.units[x.o.b]], ua:x.o.a, ub:x.o.b, mid:x.m.id, label:x.m.label, sa:null, sb:null}));
+  const inPlay = new Set(courts.flatMap(c => [...c.a, ...c.b]));
+  return {courts, rest: sess.players.filter(p => p.active && !inPlay.has(p.id)).map(p => p.id), ts: Date.now()};
+}
+
+function makeRound(sess, upto){
+  if (TOUR.has(sess.format)) return tourGen(sess, upto);
+  if (sess.format === 'rr' || (sess.format === 'rrp' && sess.mode === 'singles')) return rrGen(sess, upto);
+  if (sess.format === 'rrp') return rrpGen(sess, upto);
+  if (sess.format === 'smix') return smixGen(sess, upto);
+  if (sess.format === 'kotc' && upto > 0 && sess.rounds[upto - 1].courts.every(scored)) return kotcGen(sess, upto);
+  return generate(sess, upto);
+}
+
+/* ============ Kedudukan (leaderboard) ============ */
+function standings(sess){
+  const P = {}, teams = {};
+  sess.players.forEach(p => P[p.id] = {key:p.id, ids:[p.id], mp:0, w:0, l:0, pf:0, pa:0, crown:0});
+  sess.rounds.forEach(r => r.courts.forEach((c, ci) => {
+    if (!scored(c)) return;
+    const aw = c.sa > c.sb;
+    [[c.a, c.sa, c.sb, aw], [c.b, c.sb, c.sa, !aw]].forEach(([t, f, a, w]) => {
+      const rows = t.map(id => P[id]).filter(Boolean);
+      if (t.length === 2) { const k = qk(t); rows.push(teams[k] = teams[k] || {key:k, ids:[...t], mp:0, w:0, l:0, pf:0, pa:0, crown:0}); }
+      rows.forEach(s => { s.mp++; w ? s.w++ : s.l++; s.pf += f; s.pa += a; if (w && ci === 0) s.crown++; });
+    });
+  }));
+  const sort = arr => arr.sort((a, b) => (b.w - a.w) || ((b.mp ? b.w / b.mp : 0) - (a.mp ? a.w / a.mp : 0))
+    || ((b.pf - b.pa) - (a.pf - a.pa)) || (b.pf - a.pf));
+  return {players: sort(Object.values(P)), teams: sort(Object.values(teams))};
+}
+
+/* ============ Helper UI ============ */
+function nameMap(){ const m = {}; (S ? S.players : []).forEach(p => m[p.id] = p.name); return m; }
+function toast(msg){
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2400);
+}
+function modal(title, body, btns){
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><h3>${title}</h3><div class="mbody">${body}</div><div class="mbtns"></div></div>`;
+  btns.forEach(b => { const e = document.createElement('button'); e.className = 'btn big ' + (b.cls || ''); e.textContent = b.t;
+    e.onclick = () => { m.remove(); b.fn && b.fn(); }; m.querySelector('.mbtns').appendChild(e); });
+  m.onclick = e => { if (e.target === m) m.remove(); };
+  document.body.appendChild(m);
+}
+function stepper(fn, val){ return `<div class="step"><button aria-label="Kurang" onclick="${fn}(-1)">−</button><b>${val}</b><button aria-label="Tambah" onclick="${fn}(1)">+</button></div>`; }
+function toggle(checked, fn){ return `<label class="tg"><input type="checkbox" ${checked ? 'checked' : ''} onchange="${fn}(this.checked)"><span></span></label>`; }
+function capHint(mode, courts, n){
+  const c = capacity(mode, courts, n);
+  if (c.used < 1) return `⚠️ Perlu sekurang-kurangnya ${c.per} pemain.`;
+  return `${c.used} gelanggang digunakan · ${c.playing} bermain · ${c.rest} berehat setiap pusingan` +
+    (c.spare > 0 ? ` · ${c.spare} gelanggang tidak cukup pemain` : '');
+}
+function go(screen){ view.screen = screen; if (screen === 'home') { S = null; speechCancel(); } render(); window.scrollTo(0, 0); }
+function fmtDate(ts){ return new Date(ts).toLocaleString('ms-MY', {day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit'}); }
+const teamName = (ids, nm) => ids.map(id => nm[id] ?? '?').join(' & ');
+
+/* ============ Laman utama ============ */
+function renderHome(){
+  const list = [...db.sessions].sort((a, b) => b.updated - a.updated);
+  const totalM = db.sessions.reduce((a, s) => a + s.rounds.reduce((b, r) => b + r.courts.length, 0), 0);
+  const names = new Set(); db.sessions.forEach(s => s.players.forEach(p => names.add(p.name.trim().toLowerCase())));
+  app.innerHTML = `
+  <div class="hero">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1a202b"/><circle cx="32" cy="32" r="22" fill="#d4f34a"/>
+      ${[[24,22],[32,19],[40,22],[20,31],[28,30],[36,30],[44,32],[24,40],[32,40],[40,41],[32,47]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.4" fill="#8fa521"/>`).join('')}</svg>
+    <div><h2>PickleMix</h2><p class="hint" style="margin:2px 0 0">Perlawanan adil · Kejohanan · Kedudukan langsung</p></div>
+  </div>
+  <main>
+    <div class="statrow">
+      <div class="stat"><b>${db.sessions.length}</b><small>Sesi</small></div>
+      <div class="stat"><b>${totalM}</b><small>Perlawanan</small></div>
+      <div class="stat"><b>${names.size}</b><small>Pemain</small></div>
+    </div>
+    <button class="btn primary big" onclick="newDraft()">＋ Sesi / Kejohanan Baharu</button>
+    <span class="lbl" style="margin:24px 2px 10px">Sesi terkini</span>
+    ${list.length ? list.map(s => `
+      <div class="opt" role="button" tabindex="0" onclick="openSession('${s.id}')">
+        <span class="oi">${FICON[s.format]}</span>
+        <span class="ot"><b>${esc(s.name)}</b><small>${FORMATS[s.format]} · ${MODES[s.mode]} · ${s.players.filter(p => p.active).length} pemain · ${s.rounds.length} pusingan</small></span>
+        <button class="link" style="color:var(--mut);font-size:17px" aria-label="Padam sesi" onclick="event.stopPropagation();delSession('${s.id}')">🗑</button>
+        <span class="chev">›</span>
+      </div>`).join('') : `<section class="card"><div class="empty">🏓<br>Belum ada sesi.<br>Tekan butang di atas untuk bermula — siap dalam 30 saat.</div></section>`}
+    <section class="card sw" style="margin-top:6px">
+      <div><b>Umum automatik</b><div class="hint" style="margin:2px 0 0">Baca padanan setiap pusingan baharu dengan suara</div></div>
+      ${toggle(db.settings.autoAnnounce, 'setAuto')}
+    </section>
+    <p class="foot">Tiada akaun diperlukan · Data disimpan dalam peranti ini sahaja</p>
+  </main>`;
+}
+function setAuto(v){ db.settings.autoAnnounce = v; save(); if (v) toast('Umum automatik dihidupkan'); }
+function openSession(id){ S = db.sessions.find(s => s.id === id); if (!S) return; norm(S); view = {screen:'game', tab:'match', ri:S.rounds.length - 1, open:null, rankView:'ind'}; render(); }
+function delSession(id){
+  const s = db.sessions.find(x => x.id === id);
+  modal('Padam sesi?', `“${esc(s.name)}” dan semua sejarah pusingannya akan dipadam dari peranti ini. Tindakan ini tidak boleh dibatalkan.`,
+    [{t:'Padam', cls:'danger', fn:() => { db.sessions = db.sessions.filter(x => x.id !== id); save(); render(); }}, {t:'Batal'}]);
+}
+
+/* ============ Persediaan sesi ============ */
+function defaultPlayers(n){ return Array.from({length:n}, (_, i) => ({id:uid(), name:'P' + (i + 1), g: i % 2 ? 'P' : 'L', k:'A', active:true})); }
+function newDraft(){ draft = norm({mode:'doubles', courts:2, players:defaultPlayers(8), locks:[], rounds:[]}); view.screen = 'setup'; view.step = 1; render(); window.scrollTo(0, 0); }
+function wStep(d){ view.step = Math.max(1, Math.min(4, (view.step || 1) + d)); render(); window.scrollTo(0, 0); }
+function pickFmt(k){ draft.format = k; wStep(1); }
+function setMode(m){ draft.mode = m; if (m === 'singles') draft.locks = []; if (m === 'ranked') return autoK('draft', draft.ngrp || 2); render(); }
+function stepCourts(d){ draft.courts = Math.max(1, Math.min(8, draft.courts + d)); render(); }
+function stepCount(d){
+  const n = Math.max(4, Math.min(40, draft.players.length + d));
+  while (draft.players.length < n) { const i = draft.players.length; draft.players.push({id:uid(), name:'P' + (i + 1), g: i % 2 ? 'P' : 'L', k: GRP[(draft.ngrp || 2) - 1], active:true}); }
+  if (draft.players.length > n) {
+    const removed = new Set(draft.players.slice(n).map(p => p.id));
+    draft.players.length = n;
+    draft.locks = draft.locks.filter(l => !removed.has(l[0]) && !removed.has(l[1]));
+  }
+  render();
+}
+function resetNames(){ draft.players.forEach((p, i) => p.name = 'P' + (i + 1)); render(); }
+function renameDraft(i, v){
+  draft.players[i].name = v;
+  document.querySelectorAll(`option[value="${draft.players[i].id}"]`).forEach(o => o.textContent = v || ('P' + (i + 1)));
+  document.querySelectorAll(`[data-pn="${draft.players[i].id}"]`).forEach(o => o.textContent = v || ('P' + (i + 1)));
+}
+const ctxObj = ctx => ctx === 'draft' ? draft : ctx === 'ed' ? ed : S;
+function after(ctx){ if (ctx === 'S') markDirty(); else if (ctx === 'ed') drawEdit(); else render(); }
+function toggleG(ctx, id){ const p = ctxObj(ctx).players.find(x => x.id === id); p.g = p.g === 'L' ? 'P' : 'L'; after(ctx); }
+function cycleK(ctx, id){ const o = ctxObj(ctx), n = o.ngrp || 2, p = o.players.find(x => x.id === id); p.k = GRP[(GRP.indexOf(p.k || 'A') + 1) % n]; after(ctx); }
+function kTag(ctx, p){ return `<button class="gtag k${p.k || 'A'}" onclick="cycleK('${ctx}','${p.id}')" title="Tukar kumpulan rank">Kump. ${p.k || 'A'}</button>`; }
+function autoK(ctx, n){
+  const o = ctxObj(ctx); o.ngrp = n || o.ngrp || 2;
+  const N = o.ngrp, L = o.players.length;
+  o.players.forEach((p, i) => { p.k = GRP[Math.min(N - 1, Math.floor(i * N / L))]; });
+  after(ctx);
+}
+function kControls(ctx){
+  const o = ctxObj(ctx), N = o.ngrp || 2, act = o.players.filter(p => p.active !== false);
+  const cnt = GRP.slice(0, N).map(k => act.filter(p => (p.k || 'A') === k).length);
+  const bad = Math.max(...cnt) * 2 > act.length;
+  return `<div style="margin:8px 0"><span class="lbl">Bilangan kumpulan rank</span>
+    <div class="seg">${[2, 3, 4].map(n => `<button class="${N === n ? 'on' : ''}" onclick="autoK('${ctx}',${n})">${n}</button>`).join('')}</div>
+    <p class="hint">${GRP.slice(0, N).map((k, i) => `Kump. ${k}: <b>${cnt[i]}</b>`).join(' · ')} — Kump. A = rank tertinggi (seed). Tekan penanda kumpulan pada setiap nama untuk tukar, atau <button class="link" onclick="autoK('${ctx}')">bahagi automatik ikut senarai</button>.</p>
+    ${bad ? '<p class="hint" style="color:var(--danger)">⚠ Satu kumpulan melebihi separuh pemain — sebahagian pasangan terpaksa sekumpulan.</p>' : '<p class="hint">✓ Pasangan akan sentiasa dari kumpulan berbeza.</p>'}</div>`;
+}
+function gBtn(ctx, p){ return `<button class="g ${p.g}" onclick="toggleG('${ctx}','${p.id}')" title="Jantina">${p.g === 'L' ? '♂ L' : '♀ P'}</button>`; }
+
+function formatDesc(s){
+  if (s.format === 'smix') return s.mode === 'singles'
+    ? 'Lawan ikut ranking — pemain berdekatan ranking dipadankan, tiada pasangan dalam mod perseorangan.'
+    : 'Pemain disusun ikut seed (senarai) dan kemudian kedudukan semasa. Setiap gelanggang ambil 4 pemain berdekatan ranking: ranking 1&4 lawan 2&3 supaya seimbang. Rakan & lawan bertukar setiap pusingan dan tidak diulang selagi boleh. Gelanggang 1 = ranking teratas.';
+  if (s.format === 'mix') return 'Rakan & lawan bertukar setiap pusingan secara adil — 150 susunan dinilai, yang terbaik dipilih.';
+  if (s.format === 'rrp') return s.mode === 'singles'
+    ? 'Mod perseorangan tiada pasangan — format ini berjalan sebagai Round Robin biasa (setiap pemain lawan semua pemain lain sekali).'
+    : 'Pasangan bertukar setiap game. Jadual disusun supaya setiap pemain berganding dengan semua pemain lain tepat sekali' + (s.mode === 'mixed' ? ' (setiap Lelaki dengan setiap Perempuan)' : '') + ', dan lawan juga sentiasa berbeza. Mata & kemenangan dikira secara individu. Tamat bila semua gandingan selesai.';
+  if (s.format === 'rr') return s.mode === 'singles'
+    ? 'Setiap pemain berlawan dengan semua pemain lain tepat sekali.'
+    : 'Pasukan tetap — setiap pasukan berlawan dengan semua pasukan lain tepat sekali. Pemain tanpa pasangan tetap akan dipasangkan automatik ikut urutan senarai' + (s.mode === 'mixed' ? ' (L + P)' : '') + '.';
+  if (s.format === 'kotc') return 'Pemenang naik satu gelanggang, yang kalah turun. Gelanggang 1 = Gelanggang Raja 👑. Pasangan dipecahkan setiap pusingan. Skor wajib dimasukkan.';
+  const u = s.mode === 'singles' ? 'pemain' : 'pasukan';
+  const teamNote = s.mode === 'singles' ? '' : ' Pasukan tetap — pemain tanpa pasangan dipasangkan automatik ikut urutan.';
+  if (s.format === 'se') return `Kalah sekali terus terkeluar. Jika bilangan ${u} bukan 4/8/16/32, seed teratas dapat “bye” ke pusingan seterusnya.${teamNote}`;
+  if (s.format === 'pool') return `Peringkat kumpulan (round robin dalam kumpulan), kemudian ${u} teratas setiap kumpulan mara ke kalah mati (A1 lawan B2, B1 lawan A2…).${teamNote}`;
+  return `Setiap pusingan, ${u} dengan rekod sama berlawan — tiada siapa terkeluar dan tiada ulangan lawan. Juara = rekod terbaik selepas semua pusingan.${teamNote}`;
+}
+function tourPreview(s){
+  if (s.format === 'rrp' && s.mode !== 'singles') {
+    const R = rrpState(s, 0);
+    return `<p class="hint">📋 ${R.act.length} pemain · ${R.total} gandingan rakan · ${Math.ceil(R.total / 2)} game · anggaran ${Math.ceil(R.total / R.perRound)} pusingan</p>`;
+  }
+  if (s.format !== 'rr' && s.format !== 'rrp' && !TOUR.has(s.format)) return '';
+  const {units, extra, maxM} = rrState(s, 0), n = units.length, c = s.tcfg;
+  let m;
+  if (s.format === 'rr' || s.format === 'rrp') m = n * (n - 1) / 2;
+  else if (s.format === 'se') m = Math.max(0, n - 1) + (c.third && n >= 4 ? 1 : 0);
+  else if (s.format === 'swiss') m = c.swissRounds * Math.floor(n / 2);
+  else {
+    const G = Math.max(1, Math.min(c.groups, Math.floor(n / 2)));
+    let pm = 0; for (let g = 0; g < G; g++) { const sz = Math.floor(n / G) + (g < n % G ? 1 : 0); pm += sz * (sz - 1) / 2; }
+    const q = Math.min(n, G * c.adv); m = pm + Math.max(0, q - 1) + (c.third && q >= 4 ? 1 : 0);
+  }
+  const rounds = s.format === 'swiss' ? c.swissRounds : Math.ceil(m / maxM);
+  return `<p class="hint">📋 ${n} ${s.mode === 'singles' ? 'pemain' : 'pasukan'} · ${m} perlawanan · anggaran ${s.format === 'swiss' ? '' : '±'}${rounds} pusingan${extra.length ? ` · ⚠️ ${extra.length} pemain tiada pasangan (akan berehat)` : ''}</p>`;
+}
+function stepper2(call, val){ return `<div class="step"><button aria-label="Kurang" onclick="${call}-1)">−</button><b>${val}</b><button aria-label="Tambah" onclick="${call}1)">+</button></div>`; }
+function segOpt(ctx, key, val, opts){ return `<div class="seg ${opts.length === 2 ? 'two' : ''}">${opts.map(([v, l]) => `<button class="${val === v ? 'on' : ''}" onclick="setT('${ctx}','${key}',${JSON.stringify(v).replace(/"/g, "'")})">${l}</button>`).join('')}</div>`; }
+function tourOpts(ctx){
+  const s = ctxObj(ctx), c = s.tcfg;
+  if (!TOUR.has(s.format)) return '';
+  const running = ctx === 'S' && s.tour && s.tour.format === s.format;
+  return `<div class="row2">
+      <div><span class="lbl">Seed</span>${segOpt(ctx, 'seed', c.seed, [['list', 'Ikut senarai'], ['random', 'Rawak']])}</div>
+      ${s.format === 'swiss'
+        ? `<div><span class="lbl">Pusingan Swiss</span>${stepper2(`stepT('${ctx}','swissRounds',1,10,`, c.swissRounds)}</div>`
+        : `<div><span class="lbl">Tempat ke-3</span>${segOpt(ctx, 'third', c.third, [[true, 'Ya'], [false, 'Tidak']])}</div>`}
+    </div>
+    ${s.format === 'pool' ? `<div class="row2">
+      <div><span class="lbl">Bil. kumpulan</span>${stepper2(`stepT('${ctx}','groups',1,8,`, c.groups)}</div>
+      <div><span class="lbl">Layak / kumpulan</span>${stepper2(`stepT('${ctx}','adv',1,4,`, c.adv)}</div></div>` : ''}
+    <p class="hint">Seed 1 = ${s.mode === 'singles' ? 'pemain' : 'pasukan'} paling atas dalam senarai (letak pemain terkuat di atas).</p>
+    ${running ? `<div class="notice" style="margin-top:10px">🔒 Kejohanan sedang berjalan — perubahan tetapan di atas hanya terpakai jika kejohanan dimulakan semula.
+      <button class="btn danger" onclick="restartTour()">↺ Mula semula kejohanan</button></div>` : ''}`;
+}
+function setT(ctx, k, v){ ctxObj(ctx).tcfg[k] = v; if (ctx === 'S') save(); render(); }
+function stepT(ctx, k, min, max, d){ const c = ctxObj(ctx).tcfg; c[k] = Math.max(min, Math.min(max, c[k] + d)); if (ctx === 'S') save(); render(); }
+function restartTour(){
+  modal('Mula semula kejohanan?', 'Carta kejohanan semasa akan dibina semula dengan tetapan terkini mulai pusingan seterusnya. Pusingan & skor yang lepas kekal dalam sejarah.',
+    [{t:'↺ Mula semula', cls:'danger', fn:() => { S.tour = null; markDirty(); }}, {t:'Batal'}]);
+}
+function settingsHTML(ctx, withFmt = true){
+  const s = ctxObj(ctx);
+  const seg = keys => `<div class="seg">${keys.map(k => `<button class="${s.format === k ? 'on' : ''}" onclick="setFmt('${ctx}','${k}')">${FORMATS[k]}</button>`).join('')}</div>`;
+  return `<section class="card">
+    ${withFmt ? `<span class="lbl">Format sosial</span>
+    ${seg(['mix', 'smix', 'rrp', 'rr', 'kotc']).replace('class="seg"', 'class="seg" style="grid-template-columns:1fr 1fr"')}
+    <span class="lbl" style="margin-top:12px">Format kejohanan 🏆</span>
+    ${seg(['se', 'pool', 'swiss'])}` : `<span class="lbl">${FICON[s.format]} ${FORMATS[s.format]} — tetapan</span>`}
+    <p class="hint">${formatDesc(s)}</p>
+    ${tourPreview(s)}
+    ${tourOpts(ctx)}
+    ${s.format === 'smix' ? smixOpts(ctx) : ''}
+    <div class="sw" style="margin-top:16px">
+      <div><b>Rekod skor</b><div class="hint" style="margin:2px 0 0">${mustScore(s) ? 'Wajib untuk format ini' : 'Masukkan mata setiap gelanggang untuk papan kedudukan'}</div></div>
+      ${mustScore(s) ? '<b style="color:var(--pri)">WAJIB</b>' : `<label class="tg"><input type="checkbox" ${s.scoring ? 'checked' : ''} onchange="setOpt('${ctx}','scoring',this.checked)"><span></span></label>`}
+    </div>
+    ${scoringOn(s) ? `<div class="row2">
+      <div><span class="lbl">Mata kemenangan</span><div class="seg">${[11, 15, 21].map(n => `<button class="${s.target === n ? 'on' : ''}" onclick="setOpt('${ctx}','target',${n})">${n}</button>`).join('')}</div></div>
+      <div><span class="lbl">Menang beza 2</span><div class="seg two">${[[true, 'Ya'], [false, 'Tidak']].map(([v, l]) => `<button class="${s.winBy2 === v ? 'on' : ''}" onclick="setOpt('${ctx}','winBy2',${v})">${l}</button>`).join('')}</div></div>
+    </div>` : ''}
+  </section>`;
+}
+function smixOpts(ctx){
+  const s = ctxObj(ctx);
+  return `<div style="margin-top:12px"><span class="lbl">Ranking pusingan seterusnya</span>
+    <div class="seg two">${[['live', 'Ikut kedudukan'], ['seed', 'Kekal ikut seed']].map(([v, l]) => `<button class="${s.smixRank === v ? 'on' : ''}" onclick="setOpt('${ctx}','smixRank','${v}')">${l}</button>`).join('')}</div>
+    <p class="hint">Seed 1 = paling atas dalam senarai. ${s.smixRank === 'seed' ? 'Ranking sentiasa ikut seed asal; rakan & lawan tetap bertukar.' : 'Selepas pusingan 1, ranking dikemas kini ikut menang & beza mata (seed sebagai nilai awal).'}</p></div>`;
+}
+function setFmt(ctx, f){
+  const s = ctxObj(ctx);
+  if (s.format === f) return;
+  s.format = f;
+  if (ctx === 'S') { s.rrStart = S.rounds.length; if (TOUR.has(f)) S.tour = null; toast(`Format ${FORMATS[f]} bermula pusingan seterusnya`); }
+  after(ctx);
+}
+function setOpt(ctx, k, v){ ctxObj(ctx)[k] = v; if (ctx === 'S') { save(); render(); } else render(); }
+
+function locksHTML(ctx){
+  const src = ctxObj(ctx);
+  if (src.format === 'kotc' || src.format === 'rrp' || src.format === 'smix') return '';
+  const players = src.players.filter(p => p.active);
+  const lockedIds = new Set(src.locks.flat());
+  const free = players.filter(p => !lockedIds.has(p.id));
+  const nm = id => (src.players.find(p => p.id === id) || {}).name || '?';
+  const opts = free.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  const rr = src.format === 'rr' || TOUR.has(src.format);
+  return `<section class="card">
+    <span class="lbl">${rr ? 'Pasukan tetap 🔒' : 'Pasangan tetap 🔒'}</span>
+    <div class="hint" style="margin:0">${rr ? 'Tetapkan pasukan di sini. Pemain yang tidak dipasangkan akan dipasangkan automatik ikut urutan.' : 'Pasangan ini sentiasa bermain dalam pasukan yang sama (contoh: suami isteri, jurulatih & pelajar).'}</div>
+    <div class="chips">${src.locks.length ? src.locks.map((l, i) => `<span class="chip">🔒 <span data-pn="${l[0]}">${esc(nm(l[0]))}</span> & <span data-pn="${l[1]}">${esc(nm(l[1]))}</span><button aria-label="Buang" onclick="delLock('${ctx}',${i})">✕</button></span>`).join('') : '<span class="hint" style="margin:0">Tiada pasangan tetap.</span>'}</div>
+    ${free.length >= 2 ? `<div class="lockadd"><select id="lk1-${ctx}" aria-label="Pemain pertama">${opts}</select><select id="lk2-${ctx}" aria-label="Pemain kedua">${opts}</select><button class="btn" onclick="addLock('${ctx}')">Kunci</button></div>` : ''}
+  </section>`;
+}
+function addLock(ctx){
+  const a = document.getElementById('lk1-' + ctx).value, b = document.getElementById('lk2-' + ctx).value;
+  if (a === b) return toast('Pilih dua pemain berbeza');
+  ctxObj(ctx).locks.push([a, b]); after(ctx);
+}
+function delLock(ctx, i){ ctxObj(ctx).locks.splice(i, 1); after(ctx); }
+
+const WSTEPS = ['Format', 'Mod & gelanggang', 'Pemain', 'Semak & mula'];
+function gTag(ctx, p){ return `<button class="gtag ${p.g}" onclick="toggleG('${ctx}','${p.id}')" title="Tukar jantina">${p.g === 'L' ? '♂ Lelaki' : '♀ Perempuan'}</button>`; }
+function renderSetup(){
+  const d = draft, st = view.step || 1;
+  const L = d.players.filter(p => p.g === 'L').length;
+  const fmtOpt = k => `<button class="opt ${d.format === k ? 'on' : ''}" onclick="pickFmt('${k}')"><span class="oi">${FICON[k]}</span><span class="ot"><b>${FORMATS[k]}</b><small>${FSHORT[k]}</small></span><span class="chev">›</span></button>`;
+  let body = '';
+  if (st === 1) body = `<div class="wq">Pilih format permainan</div>
+    <span class="lbl">Sosial</span>${['mix', 'smix', 'rrp', 'rr', 'kotc'].map(fmtOpt).join('')}
+    <span class="lbl" style="margin-top:16px">Kejohanan 🏆</span>${['se', 'pool', 'swiss'].map(fmtOpt).join('')}`;
+  if (st === 2) body = `<div class="wq">Mod & gelanggang</div>
+    ${Object.keys(MODES).map(k => `<button class="opt ${d.mode === k ? 'on' : ''}" onclick="setMode('${k}')"><span class="oi">${MICON[k]}</span><span class="ot"><b>${MODES[k]}</b><small>${MSHORT[k]}</small></span></button>`).join('')}
+    <section class="card" style="margin-top:6px"><div class="row2" style="margin:0">
+      <div><span class="lbl">Gelanggang</span>${stepper('stepCourts', d.courts)}</div>
+      <div><span class="lbl">Pemain</span>${stepper('stepCount', d.players.length)}</div></div>
+      <p class="hint">${capHint(d.mode, d.courts, d.players.length)}</p></section>
+    ${settingsHTML('draft', false)}`;
+  if (st === 3) body = `<div class="wq">Senarai pemain</div>
+    <section class="card">
+      <div class="hrow"><span class="lbl">Peserta · ${d.players.length}${d.mode === 'mixed' ? ` · ${L} L · ${d.players.length - L} P` : ''}</span><button class="link" onclick="resetNames()">Set semula</button></div>
+      ${d.mode === 'ranked' ? kControls('draft') : ''}
+      <p class="hint" style="margin:6px 0 4px">${TOUR.has(d.format) || d.format === 'rr' || d.format === 'smix' ? 'Seed 1 = paling atas. Letak pemain terkuat di atas.' : 'Tekan nama untuk menukar.'}</p>
+      ${d.players.map((p, i) => `<div class="part"><span class="av ${d.mode === 'mixed' ? p.g : ''}">${i + 1}</span>
+        <input value="${esc(p.name)}" aria-label="Nama pemain ${i + 1}" oninput="renameDraft(${i},this.value)" onfocus="this.select()">
+        ${d.mode === 'mixed' ? gTag('draft', p) : d.mode === 'ranked' ? kTag('draft', p) : ''}</div>`).join('')}
+      <button class="btn" style="width:100%;margin-top:10px" onclick="stepCount(1)">＋ Tambah pemain</button>
+    </section>
+    ${d.mode !== 'singles' ? locksHTML('draft') : ''}`;
+  if (st === 4) {
+    const c = capacity(d.mode, d.courts, d.players.length);
+    body = `<div class="wq">Semak & mula</div>
+    <section class="card">
+      <div class="sum"><span>Format</span><b>${FICON[d.format]} ${FORMATS[d.format]}</b></div>
+      <div class="sum"><span>Mod</span><b>${MODES[d.mode]}</b></div>
+      <div class="sum"><span>Gelanggang</span><b>${d.courts} (${c.used} digunakan)</b></div>
+      <div class="sum"><span>Pemain</span><b>${d.players.length}${d.mode === 'mixed' ? ` · ${L} L · ${d.players.length - L} P` : ''}</b></div>
+      ${scoringOn(d) ? `<div class="sum"><span>Skor</span><b>Hingga ${d.target}${d.winBy2 ? ', beza 2' : ''}</b></div>` : '<div class="sum"><span>Skor</span><b>Tidak direkod</b></div>'}
+      ${d.mode !== 'singles' && d.format !== 'kotc' && d.format !== 'rrp' && d.format !== 'smix' ? `<div class="sum"><span>Pasangan tetap</span><b>${d.locks.length}</b></div>` : ''}
+    </section>
+    ${tourPreview(d)}
+    <p class="hint">${formatDesc(d)}</p>`;
+  }
+  app.innerHTML = `
+  <header class="bar"><button class="ic" aria-label="Kembali" onclick="${st > 1 ? 'wStep(-1)' : "go('home')"}">‹</button>
+    <h1>Sesi Baharu<small>Langkah ${st} daripada 4 · ${WSTEPS[st - 1]}</small></h1>
+    <button class="ic" aria-label="Batal" onclick="go('home')">✕</button></header>
+  <div class="wprog"><i style="width:${st * 25}%"></i></div>
+  <main style="padding-bottom:110px">${body}</main>
+  <nav class="dock"><div class="in"><div class="wnav">
+    ${st > 1 ? '<button class="btn big" onclick="wStep(-1)">‹ Kembali</button>' : '<span></span>'}
+    <button class="btn primary big" onclick="${st < 4 ? 'wStep(1)' : 'startSession()'}">${st < 4 ? 'Seterusnya ›' : 'Mula Sesi ▶'}</button>
+  </div></div></nav>`;
+}
+function startSession(){
+  const d = draft;
+  d.players.forEach((p, i) => { p.name = (p.name || '').trim() || ('P' + (i + 1)); });
+  if (capacity(d.mode, d.courts, d.players.length).used < 1) return toast('Pemain tidak mencukupi');
+  S = norm({id:uid(), name:'Sesi ' + fmtDate(Date.now()), created:Date.now(), updated:Date.now(),
+       mode:d.mode, courts:d.courts, format:d.format, smixRank:d.smixRank, ngrp:d.ngrp, target:d.target, winBy2:d.winBy2, scoring:d.scoring, rrStart:0, tcfg:{...d.tcfg}, tour:null,
+       players:d.players.map(p => ({...p, joined:0})), locks:d.locks.map(l => [...l]), rounds:[], dirty:false});
+  const r = makeRound(S, 0);
+  if (!r || r.done) return toast('Pemain/pasukan tidak mencukupi');
+  S.rounds.push(r);
+  save();
+  view = {screen:'game', tab:'match', ri:0, open:null, rankView:'ind'};
+  render(); autoAnnounce();
+}
+
+/* ============ Skrin permainan ============ */
+function renderGame(){
+  const t = view.tab;
+  const body = t === 'match' ? matchTab() : t === 'sched' ? schedTab() : t === 'rank' ? rankTab() : t === 'stats' ? statsTab() : membersTab();
+  const last = view.ri === S.rounds.length - 1;
+  app.innerHTML = `
+  <header class="bar"><button class="ic" aria-label="Laman utama" onclick="go('home')">‹</button>
+    <h1>${esc(S.name)}<small>${FORMATS[S.format]} · ${MODES[S.mode]} · ${S.players.filter(p => p.active).length} pemain</small></h1><button class="ic" aria-label="Papan TV" title="Papan TV / projektor" onclick="openTV()">📺</button></header>
+  <main id="main" style="padding-bottom:${t === 'match' ? 170 : 100}px">${body}</main>
+  <nav class="dock"><div class="in">
+    ${t === 'match' ? `<div class="cta">${last
+      ? `<button class="btn primary big" onclick="nextRound()">Pusingan Seterusnya ▶</button>`
+      : `<button class="btn big" onclick="view.ri=S.rounds.length-1;render()">Ke Pusingan Terkini (${S.rounds.length}) ⏭</button>`}</div>` : ''}
+    <div class="tabs">
+      ${[['match', '🏓', 'Perlawanan'], ['sched', '📋', 'Jadual'], ['rank', '🏆', 'Kedudukan'], ['stats', '📊', 'Statistik'], ['members', '👥', 'Ahli']].map(([k, i, l]) =>
+        `<button class="${t === k ? 'on' : ''}" onclick="view.tab='${k}';render();window.scrollTo(0,0)"><i>${i}</i>${l}</button>`).join('')}
+    </div></div></nav>`;
+  if (t === 'match') {
+    attachSwipe();
+    const ch = document.querySelector('#rchips .on'), bar = document.getElementById('rchips');
+    if (ch && bar) bar.scrollLeft = ch.offsetLeft - bar.clientWidth / 2 + ch.clientWidth / 2;
+  }
+}
+
+function scoreWarn(c){
+  if (!Number.isFinite(c.sa) || !Number.isFinite(c.sb)) return '';
+  const hi = Math.max(c.sa, c.sb), diff = Math.abs(c.sa - c.sb), t = S.target;
+  if (c.sa === c.sb) return '⚠️ Skor seri — mesti ada pemenang';
+  if (hi < t) return `⚠️ Pemenang belum capai ${t} mata`;
+  if (S.winBy2 && diff < 2) return '⚠️ Mesti menang dengan beza 2 mata';
+  if (S.winBy2 && hi > t && diff > 2) return `⚠️ Melebihi ${t} — sepatutnya beza tepat 2`;
+  if (!S.winBy2 && hi > t) return `⚠️ Melebihi ${t} mata`;
+  return '';
+}
+function teamCls(c, side){ if (!scored(c)) return ''; const aw = c.sa > c.sb; return (side === 'a') === aw ? 'win' : 'lose'; }
+function matchTab(){
+  const r = S.rounds[view.ri], nm = nameMap(), last = view.ri === S.rounds.length - 1;
+  const lockSet = new Set(S.locks.map(l => pk(l[0], l[1])));
+  const kotc = S.format === 'kotc', sc = scoringOn(S);
+  const gOf = {}; S.players.forEach(p => gOf[p.id] = p.g);
+  const side = (t, c, sd) => `<div class="side ${sd === 'b' ? 'r' : ''} ${sc ? teamCls(c, sd) : ''}">${t.map(id =>
+    `<div class="pl"><span class="av ${S.mode === 'mixed' ? gOf[id] : ''}">${esc(initials(nm[id]))}</span><span class="nm">${esc(nm[id])}</span></div>`).join('')}
+    ${t.length === 2 && lockSet.has(pk(t[0], t[1])) && !kotc ? '<small class="hint" style="margin:0">🔒 tetap</small>' : ''}</div>`;
+  const val = v => Number.isFinite(v) ? v : '';
+  let rrCard = '';
+  if (S.format === 'rrp' && S.mode !== 'singles' && last) {
+    const R = rrpState(S, S.rounds.length), pct = R.total ? Math.round(R.done / R.total * 100) : 0;
+    rrCard = `<section class="card"><div class="hrow"><span class="lbl">🔄 Gandingan rakan selesai</span><b>${R.done}/${R.total}</b></div>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <p class="hint">${R.remaining.length ? `${R.remaining.length} gandingan lagi · anggaran ${Math.ceil(R.remaining.length / R.perRound)} pusingan` : '🎉 Semua pemain telah berganding dengan semua pemain lain'}</p></section>`;
+  } else if (S.format === 'rr' && last) {
+    const R = rrState(S, S.rounds.length);
+    const pct = R.total ? Math.round(R.done / R.total * 100) : 0;
+    rrCard = `<section class="card"><div class="hrow"><span class="lbl">Kemajuan Round Robin</span><b>${R.done}/${R.total}</b></div>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <p class="hint">${R.remaining.length ? `${R.remaining.length} perlawanan lagi · anggaran ${Math.ceil(R.remaining.length / R.maxM)} pusingan` : '🎉 Semua perlawanan telah dijadualkan'}</p></section>`;
+  }
+  if (TOUR.has(S.format) && last && S.tour && S.tour.format === S.format) {
+    const R = tourResolve(S, S.rounds.length), all = S.tour.matches.filter(m => !R[m.id].auto);
+    const done = all.filter(m => R[m.id].done).length;
+    const stage = S.format === 'pool' ? (S.tour.koBuilt ? 'Peringkat kalah mati' : 'Peringkat kumpulan')
+      : S.format === 'swiss' ? `Pusingan Swiss ${S.tour.swissRound} / ${S.tcfg.swissRounds}` : 'Kalah mati';
+    const pct = all.length ? Math.round(done / all.length * 100) : 0;
+    rrCard = `<section class="card"><div class="hrow"><span class="lbl">🏆 ${stage}</span><b>${done}/${all.length}</b></div>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <p class="hint">perlawanan selesai · <button class="link" onclick="view.tab='rank';render()">Lihat carta ›</button></p></section>`;
+  }
+  const unscored = mustScore(S) && last && !r.courts.every(scored);
+  return `
+  ${S.dirty && last ? `<div class="notice">✏️ Perubahan ahli/tetapan disimpan dan akan digunakan mulai pusingan seterusnya.
+     <button class="btn" onclick="confirmRegen()">Atau jana semula pusingan ${view.ri + 1} sekarang</button></div>` : ''}
+  <div class="rchips" id="rchips">${S.rounds.map((_, i) => `<button class="${i === view.ri ? 'on' : ''}" onclick="view.ri=${i};render()">Pusingan ${i + 1}</button>`).join('')}</div>
+  <div class="rtitle"><b>Pusingan ${view.ri + 1}</b><small>${last ? '● Sedang berlangsung' : 'Sejarah'} · ${S.rounds.length} pusingan</small><button class="btn" style="padding:6px 12px;margin-left:auto" onclick="openEdit()" aria-label="Ubah gelanggang atau pemain">✏️ Ubah</button></div>
+  ${last ? timerCard() : ''}
+  ${unscored ? `<div class="notice">${kotc ? '👑 Masukkan skor semua gelanggang untuk tentukan siapa naik & turun.' : '🏆 Masukkan skor semua gelanggang sebelum pusingan seterusnya.'} Tekan kotak skor untuk mengisi.</div>` : ''}
+  ${r.courts.map((c, i) => { const has = Number.isFinite(c.sa) || Number.isFinite(c.sb), w = scoreWarn(c);
+    return `<div class="court ${(kotc && i === 0) || (c.label && /Akhir$/.test(c.label)) ? 'king' : ''}">
+     <div class="ctitle"><span>${kotc && i === 0 ? '👑 Gelanggang Raja' : 'Perlawanan ' + (view.ri + 1) + '.' + (i + 1) + ' · Gelanggang ' + (i + 1)}</span>${kotc && i > 0 ? '<span>menang ↑ · kalah ↓</span>' : c.label ? `<span>${esc(c.label)}</span>` : ''}</div>
+     <div class="mrow">${side(c.a, c, 'a')}
+       ${sc ? `<button class="sbox ${has ? '' : 'empty'}" onclick="openKeypad(${view.ri},${i})" aria-label="Isi skor gelanggang ${i + 1}">${has ? `${val(c.sa) === '' ? 0 : c.sa} : ${val(c.sb) === '' ? 0 : c.sb}` : 'Skor'}<small>${scored(c) && !w ? '✓ SELESAI' : has ? 'SUNTING' : 'TEKAN'}</small></button>` : '<div class="vs">VS</div>'}
+       ${side(c.b, c, 'b')}</div>
+     ${sc && w ? `<div class="swarn">${w}</div>` : ''}
+   </div>`; }).join('')}
+  <section class="card">
+    <span class="lbl">Berehat (${r.rest.length})</span>
+    ${r.rest.length ? `<div class="chips">${r.rest.map(id => `<span class="chip">☕ ${esc(nm[id])}</span>`).join('')}</div>` : '<div class="hint" style="margin:0">Semua pemain bermain pusingan ini.</div>'}
+  </section>
+  ${rrCard}
+  <div class="acts">
+    <button class="btn ball" onclick="announceRound()">🔊 Umum</button>
+    <button class="btn" onclick="shareRound()">📤 Kongsi</button>
+    <button class="btn" onclick="confirmRegen()" ${last ? '' : 'disabled'}>↻ Jana Semula</button>
+  </div>
+  <section class="card sw"><div><b>Umum automatik</b><div class="hint" style="margin:2px 0 0">Baca setiap pusingan baharu</div></div>${toggle(db.settings.autoAnnounce, 'setAuto')}</section>`;
+}
+
+/* ============ Ubah sesi (tambah gelanggang / pemain) ============ */
+let ed = null;
+function openEdit(){
+  ed = {courts:S.courts, ngrp:S.ngrp || 2, players:S.players.map(p => ({...p})), newName:'', newG:'L'};
+  drawEdit();
+}
+function closeEdit(){ const m = document.getElementById('editm'); if (m) m.remove(); ed = null; }
+function drawEdit(){
+  if (!ed) return;
+  let m = document.getElementById('editm');
+  const top = m ? m.querySelector('.sheet').scrollTop : 0;
+  if (!m) { m = document.createElement('div'); m.className = 'modal'; m.id = 'editm'; m.onclick = e => { if (e.target === m) closeEdit(); }; document.body.appendChild(m); }
+  const act = ed.players.filter(p => p.active), cur = S.rounds.length, tour = TOUR.has(S.format);
+  const tagOf = p => S.mode === 'mixed' ? gTag('ed', p) : S.mode === 'ranked' ? kTag('ed', p) : '';
+  m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><h3>✏️ Ubah sesi</h3>
+    <div class="mbody">
+      <span class="lbl">Gelanggang</span>${stepper('edCourts', ed.courts)}
+      <p class="hint">${capHint(S.mode, ed.courts, act.length)}</p>
+      <div class="hrow" style="margin-top:10px"><span class="lbl">Pemain · ${act.length}/${ed.players.length} hadir</span></div>
+      ${S.mode === 'ranked' ? kControls('ed') : ''}
+      ${ed.players.map(p => `<div class="part ${p.active ? '' : 'out'}">
+        <button class="chk ${p.active ? 'on' : ''}" aria-label="${p.active ? 'Hadir — tekan untuk keluarkan' : 'Tidak hadir — tekan untuk masukkan'}" onclick="edToggle('${p.id}')">${p.active ? '✓' : ''}</button>
+        <input value="${esc(p.name)}" aria-label="Nama" onchange="edRename('${p.id}',this.value)">${tagOf(p)}</div>`).join('')}
+      <div class="prow" style="margin-top:12px">
+        ${S.mode === 'mixed' ? `<button class="gtag ${ed.newG}" onclick="ed.newG=ed.newG==='L'?'P':'L';drawEdit()">${ed.newG === 'L' ? '♂ L' : '♀ P'}</button>` : ''}
+        <input class="inp" id="edNew" placeholder="＋ Tambah pemain baharu" value="${esc(ed.newName)}" oninput="ed.newName=this.value" onkeydown="if(event.key==='Enter')edAdd()">
+        <button class="btn primary" onclick="edAdd()">Tambah</button>
+      </div>
+      <p class="hint">${tour ? 'Kejohanan: carta akan dibina semula dengan pemain/gelanggang baharu mulai pusingan seterusnya. Pusingan & skor lepas kekal dalam sejarah.' : 'Pilih sama ada perubahan digunakan mulai pusingan seterusnya, atau terus pada pusingan ' + cur + ' (susunan & skor pusingan itu diganti).'}</p>
+    </div>
+    <div class="mbtns">
+      <button class="btn primary big" onclick="edApply(false)">✓ Guna mulai pusingan seterusnya</button>
+      ${tour ? '' : `<button class="btn big" onclick="edApply(true)">↻ Guna & jana semula pusingan ${cur}</button>`}
+      <button class="btn big" onclick="closeEdit()">Batal</button>
+    </div></div>`;
+  m.querySelector('.sheet').scrollTop = top;
+}
+function edCourts(d){ ed.courts = Math.max(1, Math.min(8, ed.courts + d)); drawEdit(); }
+function edToggle(id){
+  const p = ed.players.find(x => x.id === id);
+  if (!p.active && ed.players.filter(x => x.active).length >= 40) return toast('Maksimum 40 pemain');
+  p.active = !p.active; drawEdit();
+}
+function edRename(id, v){ const p = ed.players.find(x => x.id === id); v = v.trim(); if (v) p.name = v; else drawEdit(); }
+function edAdd(){
+  if (ed.players.filter(x => x.active).length >= 40) return toast('Maksimum 40 pemain');
+  const name = (ed.newName || '').trim() || ('P' + (ed.players.length + 1));
+  ed.players.push({id:uid(), name, g:ed.newG, k:GRP[(ed.ngrp || 2) - 1], active:true, joined:S.rounds.length});
+  ed.newName = ''; drawEdit();
+  setTimeout(() => { const e = document.getElementById('edNew'); e && e.focus(); }, 0);
+}
+function edApply(regen){
+  const act = ed.players.filter(p => p.active);
+  if (capacity(S.mode, ed.courts, act.length).used < 1) return toast('Pemain tidak mencukupi untuk satu gelanggang');
+  const i = S.rounds.length - 1;
+  const go2 = () => {
+    const nAdd = ed.players.length - S.players.length, dC = ed.courts - S.courts;
+    S.courts = ed.courts; S.ngrp = ed.ngrp; S.players = ed.players.map(p => ({...p}));
+    const ids = new Set(S.players.filter(p => p.active).map(p => p.id));
+    S.locks = S.locks.filter(l => ids.has(l[0]) && ids.has(l[1]));
+    if (TOUR.has(S.format)) S.tour = null;
+    S.dirty = true;
+    let msg = 'Perubahan disimpan — digunakan mulai pusingan seterusnya';
+    if (regen && !TOUR.has(S.format)) {
+      const r = makeRound(S, i);
+      if (!r || r.done || r.wait) msg = 'Tiada susunan lain untuk pusingan semasa — digunakan mulai pusingan seterusnya';
+      else { S.rounds[i] = r; S.dirty = false; view.ri = i; msg = 'Perubahan digunakan pada pusingan ' + (i + 1); }
+    }
+    closeEdit(); view.tab = 'match'; save(); render(); toast(msg);
+    if (!S.dirty) autoAnnounce();
+  };
+  if (regen && S.rounds[i].courts.some(scored))
+    modal('Ganti pusingan ' + (i + 1) + '?', 'Skor yang telah dimasukkan pada pusingan ini akan dibuang.', [{t:'↻ Ganti', cls:'danger', fn:go2}, {t:'Batal'}]);
+  else go2();
+}
+
+/* ============ Jadual keseluruhan (semua pusingan) ============ */
+function schedTab(){
+  const nm = nameMap(), v = view.schedView || 'round', sc = scoringOn(S);
+  const maxC = Math.max(1, ...S.rounds.map(r => r.courts.length));
+  const tm = t => t.map(id => esc(nm[id] || '?')).join(' &amp; ');
+  const go3 = ri => `view.ri=${ri};view.tab='match';render();window.scrollTo(0,0)`;
+  let table;
+  if (v === 'round') {
+    table = `<table><thead><tr><th>Pusingan</th>${Array.from({length:maxC}, (_, i) => `<th>Gel. ${i + 1}</th>`).join('')}<th>Rehat</th></tr></thead><tbody>
+      ${S.rounds.map((r, ri) => `<tr class="${ri === view.ri ? 'cur' : ''}" onclick="${go3(ri)}"><th>${ri + 1}</th>
+        ${Array.from({length:maxC}, (_, ci) => { const c = r.courts[ci]; if (!c) return '<td class="rest">—</td>';
+          const has = Number.isFinite(c.sa) && Number.isFinite(c.sb);
+          return `<td class="${ri === view.ri ? 'cur' : ''}"><span class="t">${tm(c.a)}</span><span class="vs">lawan</span><span class="t">${tm(c.b)}</span>${sc ? `<span class="sc">${has ? c.sa + ' : ' + c.sb : '—'}</span>` : ''}</td>`; }).join('')}
+        <td class="rest ${ri === view.ri ? 'cur' : ''}">${r.rest.length ? r.rest.map(id => esc(nm[id] || '?')).join(', ') : '—'}</td></tr>`).join('')}</tbody></table>`;
+  } else {
+    const rows = S.players.map(p => {
+      let main = 0, rst = 0, win = 0;
+      const cells = S.rounds.map((r, ri) => {
+        for (let ci = 0; ci < r.courts.length; ci++) {
+          const c = r.courts[ci], onA = c.a.includes(p.id), onB = c.b.includes(p.id);
+          if (!onA && !onB) continue;
+          main++;
+          const mate = (onA ? c.a : c.b).filter(x => x !== p.id), foe = onA ? c.b : c.a;
+          let res = '';
+          if (scored(c)) { const w = (c.sa > c.sb) === onA; if (w) win++; res = w ? ' <span class="w">✓</span>' : ' <span class="l">✗</span>'; }
+          const who = mate.length ? '+ ' + esc(nm[mate[0]] || '?') : 'vs ' + esc(nm[foe[0]] || '?');
+          return `<td class="pc ${ri === view.ri ? 'cur' : ''}"><b>G${ci + 1}</b>${res}<span class="vs">${who}</span></td>`;
+        }
+        if (r.rest.includes(p.id)) { rst++; return `<td class="pc rest ${ri === view.ri ? 'cur' : ''}">☕</td>`; }
+        return `<td class="pc rest ${ri === view.ri ? 'cur' : ''}">·</td>`;
+      }).join('');
+      return `<tr><th>${esc(nm[p.id])}${p.active ? '' : ' <span class="rest">(keluar)</span>'}</th>${cells}<td><b>${main}</b></td><td class="rest">${rst}</td>${sc ? `<td><b>${win}</b></td>` : ''}</tr>`;
+    }).join('');
+    table = `<table><thead><tr><th>Pemain</th>${S.rounds.map((_, i) => `<th>P${i + 1}</th>`).join('')}<th>Main</th><th>Rehat</th>${sc ? '<th>Menang</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  return `
+  <div class="rtitle"><b>Jadual</b><small>${S.rounds.length} pusingan · ${S.players.filter(p => p.active).length} pemain</small><button class="btn noprint" style="padding:6px 12px;margin-left:auto" onclick="openEdit()">✏️ Ubah</button></div>
+  <div class="seg two noprint" style="margin-bottom:10px">${[['round', 'Ikut pusingan'], ['player', 'Ikut pemain']].map(([k, l]) => `<button class="${v === k ? 'on' : ''}" onclick="view.schedView='${k}';render()">${l}</button>`).join('')}</div>
+  <div class="sch">${table}</div>
+  <p class="hint noprint">${v === 'round' ? 'Tekan baris untuk buka pusingan itu.' : 'G = gelanggang, + = rakan, vs = lawan, ☕ = rehat, ✓/✗ = menang/kalah.'}</p>
+  <div class="acts noprint">
+    <button class="btn" onclick="shareText(schedText())">📤 Kongsi jadual</button>
+    <button class="btn" onclick="window.print()">🖨️ Cetak</button>
+  </div>`;
+}
+function schedText(){
+  const nm = nameMap(), n = t => t.map(id => nm[id] || '?').join(' & ');
+  const out = [`${S.name} — Jadual perlawanan`];
+  S.rounds.forEach((r, ri) => {
+    out.push('', `Pusingan ${ri + 1}`);
+    r.courts.forEach((c, ci) => out.push(`Gel.${ci + 1}: ${n(c.a)} lawan ${n(c.b)}${scored(c) ? ` (${c.sa}-${c.sb})` : ''}`));
+    if (r.rest.length) out.push('Rehat: ' + r.rest.map(id => nm[id] || '?').join(', '));
+  });
+  return out.join('\n');
+}
+
+function setScore(ri, ci, side, v){
+  const c = S.rounds[ri].courts[ci];
+  const n = v === '' ? null : Math.max(0, Math.min(99, parseInt(v, 10)));
+  c[side] = Number.isFinite(n) ? n : null;
+  save();
+  ['a', 'b'].forEach(sd => { const el = document.getElementById(`t${sd}-${ci}`); if (el) el.className = 'team ' + teamCls(c, sd); });
+  const w = document.getElementById('sw-' + ci); if (w) w.textContent = scoreWarn(c);
+}
+/* Skor sekali tekan: pilih pemenang, tekan mata pasukan kalah — mata pemenang diisi automatik */
+// Papan kekunci skor: pilih pasukan, tekan nombor. Jika nombor < sasaran, pasukan lawan diisi
+// automatik sebagai pemenang (cth. tekan 2 → 2 : 11). Jika ≥ sasaran, pasukan ini menang.
+let kp = null;
+function openKeypad(ri, ci){ const c = S.rounds[ri].courts[ci]; kp = {ri, ci, side:'a', sa:c.sa, sb:c.sb}; drawKeypad(); }
+function closeKeypad(){ const e = document.getElementById('kp'); if (e) e.remove(); kp = null; }
+function drawKeypad(){
+  const c = S.rounds[kp.ri].courts[kp.ci], nm = nameMap(), t = S.target;
+  const nums = Array.from({length:(S.winBy2 ? t + 6 : t) + 1}, (_, i) => i);
+  const cur = kp['s' + kp.side];
+  let stat = '', cls = '';
+  if (Number.isFinite(kp.sa) && Number.isFinite(kp.sb)) {
+    const w = scoreWarn({sa:kp.sa, sb:kp.sb});
+    if (w) { stat = w; cls = 'warn'; }
+    else stat = `🏆 ${kp.sa > kp.sb ? 'Pasukan 1' : 'Pasukan 2'} menang ${Math.max(kp.sa, kp.sb)} : ${Math.min(kp.sa, kp.sb)}`;
+  }
+  let el = document.getElementById('kp');
+  if (!el) { el = document.createElement('div'); el.id = 'kp'; el.className = 'modal'; el.onclick = e => { if (e.target === el) closeKeypad(); }; document.body.appendChild(el); }
+  el.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">
+    <div class="hrow"><h3 style="margin:0">Skor · Gelanggang ${kp.ci + 1}</h3><button class="ic" aria-label="Tutup" onclick="closeKeypad()">✕</button></div>
+    <div class="kscore">${['a', 'b'].map((sd, i) => `<div class="kt ${kp.side === sd ? 'on' : ''}" role="button" onclick="kp.side='${sd}';drawKeypad()">
+      <small>PASUKAN ${i + 1}</small><b>${esc(teamName(c[sd], nm))}</b><div class="kn">${Number.isFinite(kp['s' + sd]) ? kp['s' + sd] : '–'}</div></div>`).join('<span class="kcolon">:</span>')}</div>
+    <div class="kstat ${cls}">${stat}</div>
+    <div class="kgrid">${nums.map(n => `<button class="${cur === n ? 'on' : ''}" onclick="kpPick(${n})">${n}</button>`).join('')}</div>
+    <p class="hint">Permainan hingga ${t}${S.winBy2 ? ', menang beza 2' : ''}. Pilih pasukan, kemudian tekan mata — skor lawan diisi automatik.</p>
+    <div class="wnav" style="padding:12px 0 0"><button class="btn big" onclick="kpClear()">Padam</button><button class="btn primary big" onclick="kpSave()">Simpan ✓</button></div></div>`;
+}
+function kpPick(n){
+  const me = 's' + kp.side, ot = kp.side === 'a' ? 'sb' : 'sa', t = S.target;
+  kp[me] = n;
+  if (n < t) kp[ot] = S.winBy2 ? Math.max(t, n + 2) : t;
+  else kp[ot] = S.winBy2 ? n - 2 : (Number.isFinite(kp[ot]) && kp[ot] < n ? kp[ot] : t - 1);
+  drawKeypad();
+}
+function kpSave(){
+  const c = S.rounds[kp.ri].courts[kp.ci];
+  c.sa = Number.isFinite(kp.sa) ? kp.sa : null; c.sb = Number.isFinite(kp.sb) ? kp.sb : null;
+  save(); closeKeypad(); render(); if (scored(c)) toast(`Skor ${c.sa} : ${c.sb} disimpan`);
+}
+function kpClear(){ const c = S.rounds[kp.ri].courts[kp.ci]; c.sa = c.sb = null; save(); closeKeypad(); render(); }
+function nav(d){ const n = view.ri + d; if (n < 0 || n >= S.rounds.length) return; view.ri = n; render(); }
+function attachSwipe(){
+  const m = document.getElementById('main'); let x0 = null, y0 = null;
+  m.addEventListener('touchstart', e => { if (e.target.tagName === 'INPUT') { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive:true});
+  m.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) nav(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, {passive:true});
+}
+function nextRound(){
+  const prev = S.rounds[S.rounds.length - 1];
+  if (mustScore(S) && prev && !prev.courts.every(scored)) {
+    toast('Masukkan skor semua gelanggang dahulu (tiada seri)');
+    view.ri = S.rounds.length - 1; render(); return;
+  }
+  const r = makeRound(S, S.rounds.length);
+  if (r && r.wait) { save(); return toast('Masukkan skor perlawanan yang belum selesai dahulu'); }
+  if (r && r.done) { save(); render(); return TOUR.has(S.format) ? tourDone(r.champ) : rrDone(); }
+  if (!r) return toast('Pemain aktif tidak mencukupi');
+  S.rounds.push(r); S.dirty = false; view.ri = S.rounds.length - 1;
+  if (S.timerAuto) { r.tm = tmNew(); r.tm.end = Date.now() + r.tm.left; r.tm.run = true; }
+  save(); render(); window.scrollTo(0, 0); autoAnnounce();
+}
+function rrDone(){
+  const rrp = S.format === 'rrp' && S.mode !== 'singles';
+  modal('Round Robin selesai 🎉', (rrp ? 'Setiap pemain telah berganding dengan semua pemain lain.' : 'Setiap ' + (S.mode === 'singles' ? 'pemain' : 'pasukan') + ' telah berlawan dengan semua yang lain.') + ' Lihat kedudukan akhir atau mulakan kitaran baharu.',
+    [{t:'🏆 Lihat Kedudukan', cls:'primary', fn:() => { view.tab = 'rank'; render(); }},
+     {t:'↻ Mula kitaran Round Robin baharu', fn:() => { S.rrStart = S.rounds.length; nextRound(); }},
+     {t:'Tutup'}]);
+}
+function tourDone(champ){
+  const nm = nameMap(), name = champ != null && S.tour ? teamName(S.tour.units[champ], nm) : '—';
+  modal('Kejohanan tamat 🏆', `<div style="text-align:center;font-size:40px">🏆</div><div style="text-align:center;font-size:20px;color:var(--ink)"><b>Juara: ${esc(name)}</b></div>`,
+    [{t:'📊 Lihat carta & kedudukan', cls:'primary', fn:() => { view.tab = 'rank'; render(); }}, {t:'Tutup'}]);
+}
+function roundLines(r){
+  const nm = nameMap();
+  return r.courts.map((c, i) => `G${i + 1}${c.label ? ' (' + c.label + ')' : ''}: ${teamName(c.a, nm)}  ${scored(c) ? c.sa + ' – ' + c.sb : 'vs'}  ${teamName(c.b, nm)}`);
+}
+function confirmRegen(){
+  const i = S.rounds.length - 1;
+  modal(`Jana semula pusingan ${i + 1}?`,
+    `Padanan berikut${S.rounds[i].courts.some(scored) ? ' (termasuk skor yang telah dimasukkan)' : ''} akan dibuang dan diganti dengan susunan baharu:<ul>${roundLines(S.rounds[i]).map(l => `<li>${esc(l)}</li>`).join('')}</ul>`,
+    [{t:'↻ Jana Semula', cls:'primary', fn:() => {
+      const r = makeRound(S, i); if (!r || r.done || r.wait) return toast('Tiada susunan lain boleh dijana');
+      S.rounds[i] = r; S.dirty = false; view.ri = i; view.tab = 'match'; save(); render(); toast('Pusingan dijana semula'); autoAnnounce();
+    }}, {t:'Batal'}]);
+}
+async function shareText(text){
+  try { if (navigator.share) { await navigator.share({text}); return; } } catch(e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); toast('Disalin — tampal di WhatsApp'); }
+  catch(e) { modal('Salin', `<textarea style="width:100%;height:200px" readonly>${esc(text)}</textarea>`, [{t:'Tutup'}]); }
+}
+function shareRound(){
+  const r = S.rounds[view.ri], nm = nameMap();
+  shareText(`🏓 ${S.name}\n${FORMATS[S.format]} · Pusingan ${view.ri + 1}\n\n${roundLines(r).join('\n')}\n\nBerehat: ${r.rest.length ? r.rest.map(id => nm[id]).join(', ') : '-'}`);
+}
+
+/* ============ Pengumuman suara ============ */
+function speechCancel(){ try { speechSynthesis.cancel(); } catch(e) {} }
+function announceRound(){
+  if (!('speechSynthesis' in window)) return toast('Peranti ini tidak menyokong suara');
+  const r = S.rounds[view.ri], nm = nameMap();
+  const vs = S.mode === 'singles' ? ' lawan ' : ', lawan ';
+  let txt = `Pusingan ${view.ri + 1}. ` + r.courts.map((c, i) =>
+    `${S.format === 'kotc' && i === 0 ? 'Gelanggang Raja' : 'Gelanggang ' + (i + 1)}${c.label ? ', ' + c.label : ''}:${c.a.map(id => nm[id]).join(' dan ')}${vs}${c.b.map(id => nm[id]).join(' dan ')}.`).join(' ');
+  if (r.rest.length) txt += ` Berehat: ${r.rest.map(id => nm[id]).join(', ')}.`;
+  speechCancel();
+  const u = new SpeechSynthesisUtterance(txt);
+  const v = speechSynthesis.getVoices().find(v => /^ms/i.test(v.lang)) || speechSynthesis.getVoices().find(v => /^id/i.test(v.lang));
+  if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'ms-MY';
+  u.rate = 0.95;
+  speechSynthesis.speak(u);
+  toast('🔊 Mengumumkan… (semak kelantangan & mod senyap)');
+}
+function autoAnnounce(){ if (db.settings.autoAnnounce) setTimeout(announceRound, 300); }
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
+
+/* ============ Kedudukan ============ */
+function rankTab(){
+  if (!scoringOn(S)) return `<section class="card"><div class="empty">Rekod skor dimatikan untuk sesi ini.<br><button class="btn primary" style="margin-top:10px" onclick="S.scoring=true;save();render()">Hidupkan rekod skor</button></div></section>`;
+  const nm = nameMap(), {players, teams} = standings(S);
+  const canTeam = S.mode !== 'singles' && S.format !== 'kotc' && S.format !== 'rrp' && S.format !== 'smix' && teams.length > 0;
+  const showTeam = canTeam && view.rankView === 'team';
+  const act = new Set(S.players.filter(p => p.active).map(p => p.id));
+  const rows = showTeam ? teams : players.filter(p => p.mp > 0 || act.has(p.key));
+  const matches = S.rounds.reduce((a, r) => a + r.courts.filter(scored).length, 0);
+  const chart = TOUR.has(S.format) ? tourHTML() : '';
+  if (!matches) return chart + `<section class="card"><div class="empty">🏆 Belum ada skor.<br>Masukkan mata di bawah setiap gelanggang dalam tab Perlawanan.</div></section>`;
+  const label = s => esc(showTeam ? teamName(s.ids, nm) : nm[s.key]);
+  const top = rows.filter(s => s.w > 0).slice(0, 3);
+  const pod = (s, i) => s ? `<div class="pod ${i === 0 ? 'p1' : ''}"><div class="m">${['🥇', '🥈', '🥉'][i]}</div><b>${label(s)}</b><small>${s.w}M · ${s.pf - s.pa >= 0 ? '+' : ''}${s.pf - s.pa}</small></div>` : '<div></div>';
+  const kotc = S.format === 'kotc';
+  return `${chart}
+  ${canTeam ? `<div class="seg two" style="margin-bottom:12px"><button class="${!showTeam ? 'on' : ''}" onclick="view.rankView='ind';render()">Individu</button><button class="${showTeam ? 'on' : ''}" onclick="view.rankView='team';render()">Pasukan</button></div>` : ''}
+  ${top.length && !TOUR.has(S.format) ? `<section class="card winner"><div class="cup">🏆</div><div class="t">Pendahulu semasa</div><b>${label(top[0])}</b>
+    <div class="hint" style="margin-top:4px">${top[0].w} menang · ${top[0].pf - top[0].pa >= 0 ? '+' : ''}${top[0].pf - top[0].pa} beza mata${top[1] ? ` · 🥈 ${label(top[1])}` : ''}${top[2] ? ` · 🥉 ${label(top[2])}` : ''}</div></section>` : ''}
+  <section class="card">
+    <div class="hrow"><span class="lbl">Kedudukan ${showTeam ? 'pasukan' : 'individu'}</span><button class="link" onclick="shareRank()">📤 Kongsi</button></div>
+    <table class="lb"><thead><tr><th>#</th><th style="text-align:left">${showTeam ? 'Pasukan' : 'Pemain'}</th><th>M-K</th><th>Beza</th><th class="pts">Mata</th></tr></thead>
+    <tbody>${rows.map((s, i) => { const d = s.pf - s.pa; return `<tr><td><span class="rk ${i < 3 && s.w > 0 ? 'r' + (i + 1) : ''}">${i + 1}</span></td>
+      <td class="nm ${!showTeam && !act.has(s.key) ? 'off' : ''}">${label(s)}<small>${s.mp} main · ${s.mp ? Math.round(s.w / s.mp * 100) : 0}% menang${kotc ? ` · 👑 ${s.crown}` : ''}</small></td>
+      <td><b>${s.w}-${s.l}</b></td><td class="${d > 0 ? 'pos' : d < 0 ? 'neg' : ''}">${d > 0 ? '+' : ''}${d}</td><td class="pts">${s.pf}</td></tr>`; }).join('')}</tbody></table>
+    <p class="hint">${matches} perlawanan bercatat. Susunan: menang → % menang → beza mata → mata dijaringkan.${kotc ? ' 👑 = menang di Gelanggang Raja.' : ''}</p>
+  </section>`;
+}
+function tourHTML(){
+  const T = S.tour;
+  if (!T || T.format !== S.format) return `<section class="card"><div class="empty">🏆 Carta ${FORMATS[S.format]} akan dibina pada pusingan seterusnya.</div></section>`;
+  const R = tourResolve(S, S.rounds.length), nm = nameMap();
+  const un = u => u === 'bye' ? '<i>BYE</i>' : u == null ? '<span class="hint">menunggu…</span>' : esc(teamName(T.units[u], nm));
+  const sc = (o, side) => { if (!o.c || !scored(o.c)) return ''; const u = side === 'a' ? o.a : o.b; return o.c.ua === u ? o.c.sa : o.c.sb; };
+  const box = m => { const o = R[m.id];
+    return `<div class="mbox ${m.final ? 'fin' : ''}">
+      <div class="${o.done && o.winner === o.a ? 'w' : ''}"><span>${un(o.a)}</span><b>${sc(o, 'a')}</b></div>
+      <div class="${o.done && o.winner === o.b ? 'w' : ''}"><span>${un(o.b)}</span><b>${sc(o, 'b')}</b></div>
+      <small>${esc(m.label)}${o.auto ? ' · bye' : o.sched && !o.done ? ' · sedang main' : ''}</small></div>`; };
+  const champ = tourChampion(S, R);
+  const allDone = T.matches.every(m => R[m.id].done) && (T.format !== 'swiss' || T.swissRound >= S.tcfg.swissRounds) && (T.format !== 'pool' || T.koBuilt);
+  let html = allDone && champ != null ? `<section class="card champ"><div style="font-size:42px">🏆</div><span class="lbl" style="margin:0">Juara</span><b>${esc(teamName(T.units[champ], nm))}</b></section>` : '';
+  const tbl = (rows, qual) => `<table><thead><tr><th>#</th><th style="text-align:left">${S.mode === 'singles' ? 'Pemain' : 'Pasukan'}</th><th>Main</th><th>Mn</th><th>K</th><th>+/−</th></tr></thead><tbody>
+    ${rows.map((r, i) => { const d = r.pf - r.pa; return `<tr><td>${i + 1}</td><td class="nm">${i < qual ? '<span title="Layak" style="color:var(--pri)">✔ </span>' : ''}${esc(teamName(T.units[r.u], nm))}</td><td>${r.mp}</td><td><b>${r.w}</b></td><td>${r.l}</td><td class="${d > 0 ? 'pos' : d < 0 ? 'neg' : ''}">${d > 0 ? '+' : ''}${d}</td></tr>`; }).join('')}</tbody></table>`;
+  if (T.format === 'pool') html += T.groups.map((g, gi) => `<section class="card"><span class="lbl">Kumpulan ${'ABCDEFGH'[gi]}</span>${tbl(groupTable(S, R, gi), S.tcfg.adv)}</section>`).join('');
+  if (T.format === 'swiss') html += `<section class="card"><span class="lbl">Jadual Swiss · pusingan ${T.swissRound}/${S.tcfg.swissRounds}</span>${tbl(swissTable(S, R), 0)}<p class="hint">Bye dikira sebagai menang.</p></section>`;
+  const ko = T.matches.filter(m => m.stage === 'ko');
+  if (ko.length) {
+    const rounds = [...new Set(ko.filter(m => !m.third).map(m => m.rnd))].sort((a, b) => a - b);
+    html += `<section class="card"><span class="lbl">Carta kalah mati</span><div class="bracket">
+      ${rounds.map(rn => { const ms = ko.filter(m => m.rnd === rn && !m.third);
+        return `<div class="bcol"><h4>${esc(ms[0].label.replace(/ \d+$/, ''))}</h4>${ms.map(box).join('')}</div>`; }).join('')}
+    </div>${ko.filter(m => m.third).map(m => `<div style="max-width:220px;margin-top:10px">${box(m)}</div>`).join('')}
+    <p class="hint">Leret ke kiri/kanan untuk lihat seluruh carta.</p></section>`;
+  } else if (T.format === 'pool') html += `<section class="card"><div class="hint" style="margin:0">Carta kalah mati dibina selepas semua perlawanan kumpulan selesai (${S.tcfg.adv} teratas setiap kumpulan layak).</div></section>`;
+  return html;
+}
+function shareRank(){
+  const nm = nameMap(), {players, teams} = standings(S);
+  const team = S.mode !== 'singles' && S.format !== 'kotc' && view.rankView === 'team';
+  const rows = (team ? teams : players).filter(s => s.mp > 0);
+  shareText(`🏆 Kedudukan — ${S.name}\n${FORMATS[S.format]}\n\n` + rows.map((s, i) =>
+    `${i + 1}. ${team ? teamName(s.ids, nm) : nm[s.key]} — ${s.w}M ${s.l}K (${s.pf - s.pa >= 0 ? '+' : ''}${s.pf - s.pa})`).join('\n'));
+}
+
+/* ============ Statistik ============ */
+function statsTab(){
+  const T = computeStats(S, S.rounds.length), nm = nameMap();
+  const seen = S.players.filter(p => p.active || T.st[p.id].eligible > 0);
+  const act = S.players.filter(p => p.active && T.st[p.id].eligible > 0);
+  const played = act.map(p => T.st[p.id].played);
+  const minP = played.length ? Math.min(...played) : 0, maxP = played.length ? Math.max(...played) : 0;
+  const rep = o => Object.values(o).reduce((a, n) => a + Math.max(0, n - 1), 0);
+  const lockSet = new Set(S.locks.map(l => pk(l[0], l[1])));
+  const partnerRep = Object.entries(T.partner).filter(([k]) => !lockSet.has(k)).reduce((a, [, n]) => a + Math.max(0, n - 1), 0);
+  const quadRep = rep(T.quad);
+  const n = act.length;
+  const possible = S.mode === 'singles' ? 0 : n * (n - 1) / 2;
+  const covered = Object.keys(T.partner).length;
+  const row = p => {
+    const s = T.st[p.id], open = view.open === p.id;
+    const list = o => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([id, c]) => `${esc(nm[id])}${c > 1 ? ' ×' + c : ''}`).join(', ') || '-';
+    return `<tr class="pl" onclick="view.open=view.open==='${p.id}'?null:'${p.id}';render()">
+        <td class="${p.active ? '' : 'off'}">${S.mode === 'mixed' ? `<span class="dot ${p.g}"></span> ` : ''}${esc(p.name)}</td>
+        <td>${s.played}</td><td>${s.rests}</td>${S.mode !== 'singles' ? `<td>${Object.keys(s.partners).length}</td>` : ''}<td>${Object.keys(s.opps).length}</td></tr>
+      ${open ? `<tr class="det"><td colspan="5">${S.mode !== 'singles' ? `<b>Rakan:</b> ${list(s.partners)}<br>` : ''}<b>Lawan:</b> ${list(s.opps)}</td></tr>` : ''}`;
+  };
+  return `
+  <section class="card">
+    <span class="lbl">Gambaran keadilan sesi</span>
+    <div class="kpis">
+      <div class="kpi"><b>${S.rounds.length}</b><small>Pusingan dimainkan</small></div>
+      <div class="kpi"><b>${minP}–${maxP}</b><small>Julat perlawanan setiap pemain${maxP - minP <= 1 ? ' ✅' : ''}</small></div>
+      <div class="kpi"><b>${T.b2b}</b><small>Rehat berturut-turut${T.b2b === 0 ? ' ✅' : ''}</small></div>
+      ${S.mode !== 'singles'
+        ? `<div class="kpi"><b>${partnerRep}</b><small>Ulangan rakan sepasukan</small></div>
+           <div class="kpi"><b>${covered}/${possible}</b><small>Gandingan rakan berbeza dicuba</small></div>
+           <div class="kpi"><b>${quadRep}</b><small>Ulangan 4 orang sama segelanggang</small></div>`
+        : `<div class="kpi"><b>${rep(T.opp)}</b><small>Ulangan lawan</small></div>`}
+    </div>
+  </section>
+  <section class="card">
+    <span class="lbl">Statistik pemain <span style="text-transform:none;font-weight:500">(tekan nama untuk butiran)</span></span>
+    <table><thead><tr><th>Nama</th><th>Main</th><th>Rehat</th>${S.mode !== 'singles' ? '<th>Rakan</th>' : ''}<th>Lawan</th></tr></thead>
+    <tbody>${seen.map(row).join('')}</tbody></table>
+  </section>`;
+}
+
+/* ============ Ahli & tetapan (pertengahan sesi) ============ */
+let newG = 'L';
+function markDirty(){ S.dirty = true; save(); render(); }
+function membersTab(){
+  const act = S.players.filter(p => p.active), out = S.players.filter(p => !p.active);
+  const mixed = S.mode === 'mixed', L = act.filter(p => p.g === 'L').length;
+  const prow = p => `<div class="part ${p.active ? '' : 'out'}">
+      <button class="chk ${p.active ? 'on' : ''}" aria-label="${p.active ? 'Hadir — tekan untuk keluarkan' : 'Tidak hadir — tekan untuk masukkan'}" onclick="toggleActive('${p.id}')">${p.active ? '✓' : ''}</button>
+      <span class="av ${mixed ? p.g : ''}">${esc(initials(p.name))}</span>
+      <input value="${esc(p.name)}" aria-label="Nama" onchange="renameS('${p.id}',this.value)">
+      ${mixed ? gTag('S', p) : S.mode === 'ranked' ? kTag('S', p) : ''}</div>`;
+  return `
+  <section class="card">
+    <div class="hrow"><span class="lbl" style="margin:0">Peserta · ${act.length}/${S.players.length}${mixed ? ` · ${L} L · ${act.length - L} P` : ''}</span></div>
+    ${S.mode === 'ranked' ? kControls('S') : ''}
+    <p class="hint" style="margin:6px 0 4px">Tanda ✓ = bermain. Buang tanda untuk pemain yang balik awal.</p>
+    ${S.players.map(prow).join('')}
+    <div class="prow" style="margin-top:12px">
+      ${mixed ? `<button class="gtag ${newG}" onclick="newG=newG==='L'?'P':'L';render()">${newG === 'L' ? '♂ L' : '♀ P'}</button>` : ''}
+      <input class="inp" id="newName" placeholder="＋ Tambah pemain (datang lewat)" onkeydown="if(event.key==='Enter')addPlayer()">
+      <button class="btn primary" onclick="addPlayer()">Tambah</button>
+    </div>
+    <p class="hint">Perubahan digunakan mulai pusingan seterusnya, atau jana semula pusingan semasa dari tab Perlawanan.</p>
+  </section>
+  <section class="card">
+    <div class="row2" style="margin:0">
+      <div><span class="lbl">Gelanggang</span>${stepper('stepCourtsS', S.courts)}</div>
+      <div><span class="lbl">Mod</span><div style="padding:10px 0;font-weight:700">${MICON[S.mode]} ${MODES[S.mode]}</div></div>
+    </div>
+    <p class="hint">${capHint(S.mode, S.courts, act.length)}</p>
+  </section>
+  ${settingsHTML('S')}
+  ${S.mode !== 'singles' ? locksHTML('S') : ''}
+  <section class="card">
+    <span class="lbl">Nama sesi</span>
+    <input class="inp" style="width:100%" value="${esc(S.name)}" onchange="S.name=this.value.trim()||S.name;save();render()">
+  </section>`;
+}
+function stepCourtsS(d){ const v = Math.max(1, Math.min(8, S.courts + d)); if (v === S.courts) return; S.courts = v; markDirty(); }
+function renameS(id, v){ const p = S.players.find(x => x.id === id); v = v.trim(); if (!v) return render(); p.name = v; save(); render(); }
+function toggleActive(id){
+  const p = S.players.find(x => x.id === id);
+  if (!p.active && S.players.filter(x => x.active).length >= 40) return toast('Maksimum 40 pemain');
+  p.active = !p.active;
+  if (!p.active) S.locks = S.locks.filter(l => l[0] !== id && l[1] !== id);
+  markDirty(); toast(p.active ? `${p.name} masuk semula` : `${p.name} keluar`);
+}
+function addPlayer(){
+  const el = document.getElementById('newName');
+  if (S.players.filter(x => x.active).length >= 40) return toast('Maksimum 40 pemain');
+  const name = el.value.trim() || ('P' + (S.players.length + 1));
+  S.players.push({id:uid(), name, g:newG, k:GRP[(S.ngrp || 2) - 1], active:true, joined:S.rounds.length});
+  markDirty(); toast(`${name} ditambah`);
+  setTimeout(() => { const e = document.getElementById('newName'); e && e.focus(); }, 0);
+}
+
+/* ============ Bunyi (Web Audio — tiada fail luar) ============ */
+let AC = null;
+function audio(){
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch(e) {}
+  return AC;
+}
+document.addEventListener('pointerdown', audio, {passive:true});
+function tone(freq, start, dur, type, vol){
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t0 = a.currentTime + start;
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + .02);
+  g.gain.setValueAtTime(vol, t0 + dur - .05); g.gain.linearRampToValueAtTime(0, t0 + dur);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + dur + .05);
+}
+function horn(){
+  [0, .8, 1.6].forEach(t => { tone(220, t, .6, 'sawtooth', .3); tone(277, t, .6, 'sawtooth', .2); });
+  try { navigator.vibrate && navigator.vibrate([600, 200, 600, 200, 600]); } catch(e) {}
+}
+function beep(n){ for (let i = 0; i < n; i++) tone(880, i * .3, .15, 'sine', .3); }
+
+/* ============ Pemasa perlawanan (setiap pusingan) ============ */
+const TVWIN = /^#tv=/.test(location.hash);   // tetingkap TV berasingan (baca sahaja)
+const overHidden = new Set();
+const fmtT = ms => { const s = Math.ceil(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const latest = () => S && S.rounds[S.rounds.length - 1];
+function tmLeft(r){
+  if (!r || !r.tm) return S.timerMins * 60000;
+  return r.tm.run ? Math.max(0, r.tm.end - Date.now()) : r.tm.left;
+}
+function tmNew(){ return {left:S.timerMins * 60000, run:false, end:null, horn:false, warn:false}; }
+function tmStart(){ const r = latest(); r.tm = r.tm || tmNew(); if (r.tm.left <= 0) r.tm = tmNew();
+  r.tm.end = Date.now() + r.tm.left; r.tm.run = true; r.tm.horn = false; audio(); save(); render(); }
+function tmPause(){ const r = latest(); if (!r.tm) return; r.tm.left = tmLeft(r); r.tm.run = false; save(); render(); }
+function tmReset(){ const r = latest(); r.tm = tmNew(); overHidden.delete(S.rounds.length - 1); save(); render(); }
+function tmAdd(min){ const r = latest(); r.tm = r.tm || tmNew();
+  if (r.tm.run) r.tm.end += min * 60000; else r.tm.left = Math.max(0, r.tm.left + min * 60000);
+  r.tm.horn = false; r.tm.warn = false; overHidden.delete(S.rounds.length - 1); save(); render(); }
+function setMins(m){ S.timerMins = m; const r = latest(); if (r && (!r.tm || (!r.tm.run && !r.tm.horn))) r.tm = tmNew(); save(); render(); }
+function timerCard(){
+  const r = latest(), run = r.tm && r.tm.run;
+  return `<section class="card">
+    <div class="trow">
+      <div><span class="lbl" style="margin:0">⏱ Pemasa · ${S.timerMins} min</span><div class="tbig tmr">${fmtT(tmLeft(r))}</div></div>
+      <div class="tbtns">
+        ${run ? `<button class="btn" onclick="tmPause()" aria-label="Jeda">⏸</button>` : `<button class="btn primary" onclick="tmStart()" aria-label="Mula">▶</button>`}
+        <button class="btn" onclick="tmAdd(1)" aria-label="Tambah 1 minit">+1</button>
+        <button class="btn" onclick="tmReset()" aria-label="Set semula">↺</button>
+      </div>
+    </div>
+    <details${view.tmOpen ? ' open' : ''} ontoggle="view.tmOpen=this.open"><summary>Tetapan pemasa</summary>
+      <div class="seg" style="grid-template-columns:repeat(4,1fr);margin:10px 0">${[10, 12, 15, 20].map(m => `<button class="${S.timerMins === m ? 'on' : ''}" onclick="setMins(${m})">${m} min</button>`).join('')}</div>
+      <div class="sw"><div class="hint" style="margin:0">Mula automatik setiap pusingan baharu. Hon berbunyi bila masa tamat, bip 2 minit sebelum.</div>${toggle(S.timerAuto, 'setTimerAuto')}</div>
+    </details>
+  </section>`;
+}
+function setTimerAuto(v){ S.timerAuto = v; save(); }
+function tick(){
+  if (!S || !(view.screen === 'game' || view.screen === 'tv')) return;
+  const ri = S.rounds.length - 1, r = S.rounds[ri]; if (!r) return;
+  const left = tmLeft(r), zero = !!(r.tm && left === 0);
+  document.querySelectorAll('.tmr').forEach(e => { e.textContent = fmtT(left); e.classList.toggle('low', left > 0 && left <= 60000); e.classList.toggle('zero', zero); });
+  const ov = document.getElementById('tvover'); if (ov) ov.style.display = zero && !overHidden.has(ri) ? 'grid' : 'none';
+  if (r.tm && r.tm.run) {
+    if (!r.tm.warn && left > 0 && left <= 120000 && S.timerMins > 2) { r.tm.warn = true; beep(2); if (!TVWIN) save(); }
+    if (left === 0) {
+      r.tm.run = false; r.tm.left = 0; r.tm.horn = true; horn();
+      if (!TVWIN) { save(); toast('⏱ Masa tamat!'); if (view.screen === 'game') render(); }
+    }
+  }
+}
+setInterval(tick, 500);
+
+/* ============ Papan TV / projektor ============ */
+let wakeLock = null;
+async function keepAwake(){ try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } } catch(e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && view.screen === 'tv') keepAwake(); });
+function openTV(){ view.screen = 'tv'; keepAwake(); render(); }
+function exitTV(){ if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); view.screen = 'game'; render(); }
+function fullTV(){ const d = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else if (d.requestFullscreen) d.requestFullscreen().catch(() => toast('Skrin penuh tidak disokong')); }
+function popTV(){
+  const w = window.open(location.pathname + '#tv=' + S.id, 'picklemix-tv', 'popup,width=1280,height=720');
+  if (!w) toast('Benarkan pop-up untuk buka tetingkap TV'); else toast('Seret tetingkap itu ke skrin TV, kemudian tekan ⛶');
+}
+function renderTV(){
+  const ri = S.rounds.length - 1, r = S.rounds[ri], nm = nameMap(), kotc = S.format === 'kotc';
+  const n = r.courts.length, cols = n <= 2 ? n : n <= 4 ? 2 : n <= 6 ? 3 : 4;
+  let board = '';
+  if (scoringOn(S)) {
+    const st = standings(S), team = S.mode !== 'singles' && (S.format === 'rr' || TOUR.has(S.format));
+    const rows = (team ? st.teams : st.players).filter(s => s.mp > 0).slice(0, 8);
+    if (rows.length) board = `<div class="tvbox"><h3>🏆 Kedudukan</h3>${rows.map((s, i) => `<div class="r"><span>${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'} ${esc(team ? teamName(s.ids, nm) : nm[s.key])}</span><b>${s.w}M ${s.pf - s.pa >= 0 ? '+' : ''}${s.pf - s.pa}</b></div>`).join('')}</div>`;
+  }
+  let champ = '';
+  if (TOUR.has(S.format) && S.tour && S.tour.format === S.format) {
+    const R = tourResolve(S, S.rounds.length), all = S.tour.matches.filter(m => !R[m.id].auto);
+    champ = `<div class="tvbox"><h3>📊 Kejohanan</h3><div class="r"><span>Perlawanan selesai</span><b>${all.filter(m => R[m.id].done).length}/${all.length}</b></div></div>`;
+  }
+  const team = (c, sd) => `<div class="t ${scored(c) ? ((sd === 'a') === (c.sa > c.sb) ? 'win' : 'lose') : ''}">${c[sd].map(id => esc(nm[id])).join('<br>')}</div>`;
+  app.innerHTML = `<div class="tv">
+    <header class="tvh">
+      <div><b>${esc(S.name)}</b><span>${FORMATS[S.format]} · ${MODES[S.mode]}</span></div>
+      <div class="tvr">PUSINGAN ${ri + 1}</div>
+      <div class="tmr tvt">${fmtT(tmLeft(r))}</div>
+      <div class="tvbtn">
+        ${TVWIN ? '' : (r.tm && r.tm.run ? `<button onclick="tmPause()" title="Jeda pemasa">⏸</button>` : `<button onclick="tmStart()" title="Mula pemasa">▶</button>`)}
+        <button onclick="audio();beep(1)" title="Uji / aktifkan bunyi">🔊</button>
+        ${TVWIN ? '' : `<button onclick="popTV()" title="Buka di tetingkap/skrin lain">🖥</button>`}
+        <button onclick="fullTV()" title="Skrin penuh">⛶</button>
+        ${TVWIN ? '' : `<button onclick="exitTV()" title="Keluar">✕</button>`}
+      </div>
+    </header>
+    <div class="tvbody">
+      <div class="tvcourts" style="grid-template-columns:repeat(${cols},1fr)">
+        ${r.courts.map((c, i) => `<div class="tvc ${(kotc && i === 0) || (c.label && /Akhir$/.test(c.label)) ? 'king' : ''}">
+          <div class="h"><span>${kotc && i === 0 ? '👑 GELANGGANG RAJA' : 'GELANGGANG ' + (i + 1)}</span><span>${c.label ? esc(c.label) : ''}</span></div>
+          <div class="m">${team(c, 'a')}<div>${scored(c) || Number.isFinite(c.sa) ? `<div class="s">${c.sa ?? 0} : ${c.sb ?? 0}</div>` : '<div class="vs" style="margin:auto">VS</div>'}</div>${team(c, 'b')}</div>
+        </div>`).join('')}
+      </div>
+      <aside class="tvside">
+        <div class="tvbox"><h3>☕ Berehat (${r.rest.length})</h3><div class="tvrest">${r.rest.length ? r.rest.map(id => `<span>${esc(nm[id])}</span>`).join('') : '<span>Tiada</span>'}</div></div>
+        ${champ}${board}
+        <div class="tvfoot">PickleMix · mrsmsas.github.io/picklemix</div>
+      </aside>
+    </div>
+    <div class="tvover" id="tvover" onclick="overHidden.add(${ri});this.style.display='none'">⏱ MASA TAMAT</div>
+  </div>`;
+  tick();
+}
+if (TVWIN) {
+  window.addEventListener('storage', e => {
+    if (e.key !== LS) return;
+    try { db = Object.assign(db, JSON.parse(e.newValue)); db.sessions.forEach(norm); } catch(err) { return; }
+    S = db.sessions.find(s => s.id === location.hash.slice(4)) || S;
+    render();
+  });
+}
+
+/* ============ Render ============ */
+function render(){
+  app.classList.toggle('wide', view.screen === 'tv');
+  if (view.screen === 'tv' && S) renderTV();
+  else if (view.screen === 'setup') renderSetup();
+  else if (view.screen === 'game' && S) renderGame();
+  else { view.screen = 'home'; renderHome(); }
+}
+if (TVWIN) {
+  S = db.sessions.find(s => s.id === location.hash.slice(4)) || null;
+  if (S) { view.screen = 'tv'; keepAwake(); }
+}
+render();
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

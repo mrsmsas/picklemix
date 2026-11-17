@@ -364,10 +364,11 @@ const MODES = {doubles:'Beregu', singles:'Perseorangan', mixed:'Beregu Campuran'
 const GRP = ['A', 'B', 'C', 'D'];
 const grpMode = m => m === 'mixed' || m === 'ranked';
 const grpOf = (sess, p) => sess.mode === 'ranked' ? (p.k || 'A') : p.g;
-const FORMATS = {mix:'Mix & Match', smix:'Mix Seeded', rrp:'Tukar Pasangan', rr:'Round Robin', kotc:'Raja Gelanggang', se:'Kalah Mati', pool:'Kumpulan + Kalah Mati', swiss:'Swiss'};
+const FORMATS = {mix:'Mix & Match', smix:'Mix Seeded', rot:'Putaran Seed', rrp:'Tukar Pasangan', rr:'Round Robin', kotc:'Raja Gelanggang', se:'Kalah Mati', pool:'Kumpulan + Kalah Mati', swiss:'Swiss'};
 const TOUR = new Set(['se', 'pool', 'swiss']);
-const FICON = {mix:'🔀', smix:'🎯', rrp:'🔄', rr:'🔁', kotc:'👑', se:'🏆', pool:'🗂️', swiss:'♟️'};
+const FICON = {mix:'🔀', smix:'🎯', rot:'🔃', rrp:'🔄', rr:'🔁', kotc:'👑', se:'🏆', pool:'🗂️', swiss:'♟️'};
 const FSHORT = {mix:'Rakan & lawan bertukar setiap pusingan secara adil',
+  rot:'Seed tetap berlawan, unseeded berputar — setiap seeded berpasangan dengan setiap unseeded sekali (P1/P7 v P2/P8, kemudian P1/P8 v P2/P9…)',
   smix:'Mix & Match ikut seed/ranking — pemain kuat berganding dengan yang lemah, gelanggang atas untuk ranking teratas',
   rrp:'Round robin individu — pasangan bertukar setiap game, setiap pemain berganding dengan semua pemain lain sekali',
   rr:'Pasukan/pemain tetap — semua berlawan dengan semua, tepat sekali',
@@ -637,6 +638,35 @@ function smixGen(sess, upto){
     if (sc < bestSc) { bestSc = sc; best = {courts, rest}; }
   }
   return {courts: best.courts, rest: best.rest, ts: Date.now()};
+}
+
+/* ============ Enjin 1c: Putaran Seed (seed tetap berlawan, unseeded berputar) ============ */
+// Kump. A = seeded, selain itu = unseeded (ikut urutan senarai). Gelanggang c: seeded 2c+1 lawan seeded 2c+2 (tetap).
+// Pusingan r: seeded i berpasangan dengan unseeded (i + r) mod N → setiap seeded berpasangan dengan setiap unseeded tepat sekali dalam N pusingan.
+function rotState(sess, upto){
+  const act = sess.players.filter(p => p.active);
+  const S = act.filter(p => (p.k || 'A') === 'A').map(p => p.id), U = act.filter(p => (p.k || 'A') !== 'A').map(p => p.id);
+  return {S, U, N:S.length, r:Math.max(0, upto - (sess.rrStart || 0))};
+}
+function rotProblem(sess){
+  if (sess.mode !== 'ranked') return 'Format Putaran Seed memerlukan mod Beregu Kumpulan Rank.';
+  const R = rotState(sess, 0);
+  if (R.N < 2 || R.N !== R.U.length) return `Bilangan seeded (${R.N}) mesti sama dengan unseeded (${R.U.length}). Semak Kump. A = seeded.`;
+  if (R.N % 2) return 'Bilangan seeded mesti genap (2, 4, 6…) supaya seeded boleh berlawan sesama seeded.';
+  if (sess.courts < R.N / 2) return `Perlukan sekurang-kurangnya ${R.N / 2} gelanggang.`;
+  return '';
+}
+function rotGen(sess, upto){
+  if (rotProblem(sess)) return null;
+  const R = rotState(sess, upto);
+  if (R.r >= R.N) return {done:true};
+  const courts = [];
+  for (let c = 0; c < R.N / 2; c++) {
+    const a = R.S[2 * c], b = R.S[2 * c + 1];
+    courts.push({a:[a, R.U[(2 * c + R.r) % R.N]], b:[b, R.U[(2 * c + 1 + R.r) % R.N]], sa:null, sb:null,
+      label: c === 0 ? 'Gelanggang seed teratas' : ''});
+  }
+  return {courts, rest:[], ts:Date.now()};
 }
 
 /* ============ Enjin 2: Round Robin (setiap unit lawan semua unit lain sekali) ============ */
@@ -987,6 +1017,7 @@ function makeRound(sess, upto){
   if (sess.format === 'rr' || (sess.format === 'rrp' && sess.mode === 'singles')) return rrGen(sess, upto);
   if (sess.format === 'rrp') return rrpGen(sess, upto);
   if (sess.format === 'smix') return smixGen(sess, upto);
+  if (sess.format === 'rot') return rotGen(sess, upto);
   if (sess.format === 'kotc' && upto > 0 && sess.rounds[upto - 1].courts.every(scored)) return kotcGen(sess, upto);
   return generate(sess, upto);
 }
@@ -1080,7 +1111,7 @@ function delSession(id){
 function defaultPlayers(n){ return Array.from({length:n}, (_, i) => ({id:uid(), name:'P' + (i + 1), g: i % 2 ? 'P' : 'L', k:'A', active:true})); }
 function newDraft(){ draft = norm({mode:'doubles', courts:2, players:defaultPlayers(8), locks:[], rounds:[]}); view.screen = 'setup'; view.step = 1; render(); window.scrollTo(0, 0); }
 function wStep(d){ view.step = Math.max(1, Math.min(4, (view.step || 1) + d)); render(); window.scrollTo(0, 0); }
-function pickFmt(k){ draft.format = k; wStep(1); }
+function pickFmt(k){ draft.format = k; if (k === 'rot') { draft.mode = 'ranked'; draft.ngrp = 2; assignK(draft); } wStep(1); }
 function setMode(m){ draft.mode = m; if (m === 'singles') draft.locks = []; if (m === 'ranked') return autoK('draft', draft.ngrp || 2); render(); }
 function stepCourts(d){ draft.courts = Math.max(1, Math.min(8, draft.courts + d)); render(); }
 function stepCount(d){
@@ -1091,6 +1122,7 @@ function stepCount(d){
     draft.players.length = n;
     draft.locks = draft.locks.filter(l => !removed.has(l[0]) && !removed.has(l[1]));
   }
+  if (draft.format === 'rot' && draft.mode === 'ranked') { draft.ngrp = 2; assignK(draft); }
   render();
 }
 function resetNames(){ draft.players.forEach((p, i) => p.name = 'P' + (i + 1)); render(); }
@@ -1104,10 +1136,13 @@ function after(ctx){ if (ctx === 'S') markDirty(); else if (ctx === 'ed') drawEd
 function toggleG(ctx, id){ const p = ctxObj(ctx).players.find(x => x.id === id); p.g = p.g === 'L' ? 'P' : 'L'; after(ctx); }
 function cycleK(ctx, id){ const o = ctxObj(ctx), n = o.ngrp || 2, p = o.players.find(x => x.id === id); p.k = GRP[(GRP.indexOf(p.k || 'A') + 1) % n]; after(ctx); }
 function kTag(ctx, p){ return `<button class="gtag k${p.k || 'A'}" onclick="cycleK('${ctx}','${p.id}')" title="Tukar kumpulan rank">Kump. ${p.k || 'A'}</button>`; }
+function assignK(o){
+  const N = o.ngrp || 2, L = o.players.length;
+  o.players.forEach((p, i) => { p.k = GRP[Math.min(N - 1, Math.floor(i * N / L))]; });
+}
 function autoK(ctx, n){
   const o = ctxObj(ctx); o.ngrp = n || o.ngrp || 2;
-  const N = o.ngrp, L = o.players.length;
-  o.players.forEach((p, i) => { p.k = GRP[Math.min(N - 1, Math.floor(i * N / L))]; });
+  assignK(o);
   after(ctx);
 }
 function kControls(ctx){
@@ -1122,6 +1157,7 @@ function kControls(ctx){
 function gBtn(ctx, p){ return `<button class="g ${p.g}" onclick="toggleG('${ctx}','${p.id}')" title="Jantina">${p.g === 'L' ? '♂ L' : '♀ P'}</button>`; }
 
 function formatDesc(s){
+  if (s.format === 'rot') return 'Seeded kekal di gelanggang masing-masing (P1 lawan P2, P3 lawan P4…), unseeded berputar satu kedudukan setiap pusingan. Setiap seeded berpasangan dengan setiap unseeded tepat sekali. Tamat selepas N pusingan (N = bilangan seeded). Letak seeded di atas senarai (Kump. A).';
   if (s.format === 'smix') return s.mode === 'singles'
     ? 'Lawan ikut ranking — pemain berdekatan ranking dipadankan, tiada pasangan dalam mod perseorangan.'
     : 'Pemain disusun ikut seed (senarai) dan kemudian kedudukan semasa. Setiap gelanggang ambil 4 pemain berdekatan ranking: ranking 1&4 lawan 2&3 supaya seimbang. Rakan & lawan bertukar setiap pusingan dan tidak diulang selagi boleh. Gelanggang 1 = ranking teratas.';
@@ -1140,6 +1176,12 @@ function formatDesc(s){
   return `Setiap pusingan, ${u} dengan rekod sama berlawan — tiada siapa terkeluar dan tiada ulangan lawan. Juara = rekod terbaik selepas semua pusingan.${teamNote}`;
 }
 function tourPreview(s){
+  if (s.format === 'rot') {
+    const pr = rotProblem(s);
+    if (pr) return `<p class="hint" style="color:var(--danger)">⚠ ${pr}</p>`;
+    const N = rotState(s, 0).N;
+    return `<p class="hint">📋 ${N} seeded · ${N} unseeded · ${N} pusingan · ${N * N / 2} perlawanan · ${N} game setiap pemain</p>`;
+  }
   if (s.format === 'rrp' && s.mode !== 'singles') {
     const R = rrpState(s, 0);
     return `<p class="hint">📋 ${R.act.length} pemain · ${R.total} gandingan rakan · ${Math.ceil(R.total / 2)} game · anggaran ${Math.ceil(R.total / R.perRound)} pusingan</p>`;
@@ -1188,7 +1230,7 @@ function settingsHTML(ctx, withFmt = true){
   const seg = keys => `<div class="seg">${keys.map(k => `<button class="${s.format === k ? 'on' : ''}" onclick="setFmt('${ctx}','${k}')">${FORMATS[k]}</button>`).join('')}</div>`;
   return `<section class="card">
     ${withFmt ? `<span class="lbl">Format sosial</span>
-    ${seg(['mix', 'smix', 'rrp', 'rr', 'kotc']).replace('class="seg"', 'class="seg" style="grid-template-columns:1fr 1fr"')}
+    ${seg(['mix', 'smix', 'rot', 'rrp', 'rr', 'kotc']).replace('class="seg"', 'class="seg" style="grid-template-columns:1fr 1fr"')}
     <span class="lbl" style="margin-top:12px">Format kejohanan 🏆</span>
     ${seg(['se', 'pool', 'swiss'])}` : `<span class="lbl">${FICON[s.format]} ${FORMATS[s.format]} — tetapan</span>`}
     <p class="hint">${formatDesc(s)}</p>
@@ -1222,7 +1264,7 @@ function setOpt(ctx, k, v){ ctxObj(ctx)[k] = v; if (ctx === 'S') { save(); rende
 
 function locksHTML(ctx){
   const src = ctxObj(ctx);
-  if (src.format === 'kotc' || src.format === 'rrp' || src.format === 'smix') return '';
+  if (src.format === 'kotc' || src.format === 'rrp' || src.format === 'smix' || src.format === 'rot') return '';
   const players = src.players.filter(p => p.active);
   const lockedIds = new Set(src.locks.flat());
   const free = players.filter(p => !lockedIds.has(p.id));
@@ -1251,7 +1293,7 @@ function renderSetup(){
   const fmtOpt = k => `<button class="opt ${d.format === k ? 'on' : ''}" onclick="pickFmt('${k}')"><span class="oi">${FICON[k]}</span><span class="ot"><b>${FORMATS[k]}</b><small>${FSHORT[k]}</small></span><span class="chev">›</span></button>`;
   let body = '';
   if (st === 1) body = `<div class="wq">Pilih format permainan</div>
-    <span class="lbl">Sosial</span>${['mix', 'smix', 'rrp', 'rr', 'kotc'].map(fmtOpt).join('')}
+    <span class="lbl">Sosial</span>${['mix', 'smix', 'rot', 'rrp', 'rr', 'kotc'].map(fmtOpt).join('')}
     <span class="lbl" style="margin-top:16px">Kejohanan 🏆</span>${['se', 'pool', 'swiss'].map(fmtOpt).join('')}`;
   if (st === 2) body = `<div class="wq">Mod & gelanggang</div>
     ${Object.keys(MODES).map(k => `<button class="opt ${d.mode === k ? 'on' : ''}" onclick="setMode('${k}')"><span class="oi">${MICON[k]}</span><span class="ot"><b>${MODES[k]}</b><small>${MSHORT[k]}</small></span></button>`).join('')}
@@ -1264,6 +1306,7 @@ function renderSetup(){
     <section class="card">
       <div class="hrow"><span class="lbl">Peserta · ${d.players.length}${d.mode === 'mixed' ? ` · ${L} L · ${d.players.length - L} P` : ''}</span><button class="link" onclick="resetNames()">Set semula</button></div>
       ${d.mode === 'ranked' ? kControls('draft') : ''}
+      ${d.format === 'rot' ? tourPreview(d) : ''}
       <p class="hint" style="margin:6px 0 4px">${TOUR.has(d.format) || d.format === 'rr' || d.format === 'smix' ? 'Seed 1 = paling atas. Letak pemain terkuat di atas.' : 'Tekan nama untuk menukar.'}</p>
       ${d.players.map((p, i) => `<div class="part"><span class="av ${d.mode === 'mixed' ? p.g : ''}">${i + 1}</span>
         <input value="${esc(p.name)}" aria-label="Nama pemain ${i + 1}" oninput="renameDraft(${i},this.value)" onfocus="this.select()">
@@ -1280,7 +1323,7 @@ function renderSetup(){
       <div class="sum"><span>Gelanggang</span><b>${d.courts} (${c.used} digunakan)</b></div>
       <div class="sum"><span>Pemain</span><b>${d.players.length}${d.mode === 'mixed' ? ` · ${L} L · ${d.players.length - L} P` : ''}</b></div>
       ${scoringOn(d) ? `<div class="sum"><span>Skor</span><b>Hingga ${d.target}${d.winBy2 ? ', beza 2' : ''}</b></div>` : '<div class="sum"><span>Skor</span><b>Tidak direkod</b></div>'}
-      ${d.mode !== 'singles' && d.format !== 'kotc' && d.format !== 'rrp' && d.format !== 'smix' ? `<div class="sum"><span>Pasangan tetap</span><b>${d.locks.length}</b></div>` : ''}
+      ${d.mode !== 'singles' && d.format !== 'kotc' && d.format !== 'rrp' && d.format !== 'smix' && d.format !== 'rot' ? `<div class="sum"><span>Pasangan tetap</span><b>${d.locks.length}</b></div>` : ''}
     </section>
     ${tourPreview(d)}
     <p class="hint">${formatDesc(d)}</p>`;
@@ -1300,6 +1343,7 @@ function startSession(){
   const d = draft;
   d.players.forEach((p, i) => { p.name = (p.name || '').trim() || ('P' + (i + 1)); });
   if (capacity(d.mode, d.courts, d.players.length).used < 1) return toast('Pemain tidak mencukupi');
+  if (d.format === 'rot') { const pr = rotProblem(d); if (pr) return toast(pr); }
   S = norm({id:uid(), name:'Sesi ' + fmtDate(Date.now()), created:Date.now(), updated:Date.now(),
        mode:d.mode, courts:d.courts, format:d.format, smixRank:d.smixRank, ngrp:d.ngrp, target:d.target, winBy2:d.winBy2, scoring:d.scoring, rrStart:0, tcfg:{...d.tcfg}, tour:null,
        players:d.players.map(p => ({...p, joined:0})), locks:d.locks.map(l => [...l]), rounds:[], dirty:false});
@@ -1361,6 +1405,11 @@ function matchTab(){
     rrCard = `<section class="card"><div class="hrow"><span class="lbl">🔄 Gandingan rakan selesai</span><b>${R.done}/${R.total}</b></div>
       <div class="prog"><i style="width:${pct}%"></i></div>
       <p class="hint">${R.remaining.length ? `${R.remaining.length} gandingan lagi · anggaran ${Math.ceil(R.remaining.length / R.perRound)} pusingan` : '🎉 Semua pemain telah berganding dengan semua pemain lain'}</p></section>`;
+  } else if (S.format === 'rot' && last) {
+    const R = rotState(S, S.rounds.length), cur = Math.min(R.N, R.r), pct = R.N ? Math.round(cur / R.N * 100) : 0;
+    rrCard = `<section class="card"><div class="hrow"><span class="lbl">🔃 Putaran Seed</span><b>${cur}/${R.N} pusingan</b></div>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <p class="hint">${cur < R.N ? `${R.N - cur} pusingan lagi — setiap seeded berpasangan dengan setiap unseeded sekali` : '🎉 Semua gandingan seeded + unseeded selesai'}</p></section>`;
   } else if (S.format === 'rr' && last) {
     const R = rrState(S, S.rounds.length);
     const pct = R.total ? Math.round(R.done / R.total * 100) : 0;
@@ -1461,6 +1510,7 @@ function edAdd(){
 function edApply(regen){
   const act = ed.players.filter(p => p.active);
   if (capacity(S.mode, ed.courts, act.length).used < 1) return toast('Pemain tidak mencukupi untuk satu gelanggang');
+  if (S.format === 'rot') { const pr = rotProblem({mode:S.mode, courts:ed.courts, players:ed.players}); if (pr) return toast(pr); }
   const i = S.rounds.length - 1;
   const go2 = () => {
     const nAdd = ed.players.length - S.players.length, dC = ed.courts - S.courts;
@@ -1604,6 +1654,7 @@ function nextRound(){
     toast('Masukkan skor semua gelanggang dahulu (tiada seri)');
     view.ri = S.rounds.length - 1; render(); return;
   }
+  if (S.format === 'rot') { const pr = rotProblem(S); if (pr) return toast(pr); }
   const r = makeRound(S, S.rounds.length);
   if (r && r.wait) { save(); return toast('Masukkan skor perlawanan yang belum selesai dahulu'); }
   if (r && r.done) { save(); render(); return TOUR.has(S.format) ? tourDone(r.champ) : rrDone(); }
@@ -1613,7 +1664,7 @@ function nextRound(){
   save(); render(); window.scrollTo(0, 0); autoAnnounce();
 }
 function rrDone(){
-  const rrp = S.format === 'rrp' && S.mode !== 'singles';
+  const rrp = (S.format === 'rrp' || S.format === 'rot') && S.mode !== 'singles';
   modal('Round Robin selesai 🎉', (rrp ? 'Setiap pemain telah berganding dengan semua pemain lain.' : 'Setiap ' + (S.mode === 'singles' ? 'pemain' : 'pasukan') + ' telah berlawan dengan semua yang lain.') + ' Lihat kedudukan akhir atau mulakan kitaran baharu.',
     [{t:'🏆 Lihat Kedudukan', cls:'primary', fn:() => { view.tab = 'rank'; render(); }},
      {t:'↻ Mula kitaran Round Robin baharu', fn:() => { S.rrStart = S.rounds.length; nextRound(); }},
@@ -1671,7 +1722,7 @@ if ('speechSynthesis' in window) speechSynthesis.getVoices();
 function rankTab(){
   if (!scoringOn(S)) return `<section class="card"><div class="empty">Rekod skor dimatikan untuk sesi ini.<br><button class="btn primary" style="margin-top:10px" onclick="S.scoring=true;save();render()">Hidupkan rekod skor</button></div></section>`;
   const nm = nameMap(), {players, teams} = standings(S);
-  const canTeam = S.mode !== 'singles' && S.format !== 'kotc' && S.format !== 'rrp' && S.format !== 'smix' && teams.length > 0;
+  const canTeam = S.mode !== 'singles' && S.format !== 'kotc' && S.format !== 'rrp' && S.format !== 'smix' && S.format !== 'rot' && teams.length > 0;
   const showTeam = canTeam && view.rankView === 'team';
   const act = new Set(S.players.filter(p => p.active).map(p => p.id));
   const rows = showTeam ? teams : players.filter(p => p.mp > 0 || act.has(p.key));
