@@ -335,6 +335,23 @@ details summary{color:var(--mut);font-size:13px;font-weight:600;cursor:pointer;m
 .tvc .t.win,.tvr{color:#d4f34a}
 .tvc .s{color:#d4f34a}
 .tvrest span{background:#232a37}
+.tabs{grid-template-columns:repeat(5,1fr)}
+.tabs button{font-size:11px}
+.sch{overflow:auto;max-height:calc(100vh - 230px);border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.sch table{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%}
+.sch th,.sch td{padding:8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top;text-align:left}
+.sch thead th{position:sticky;top:0;background:var(--card2);z-index:2;font-weight:800;white-space:nowrap}
+.sch tbody th{position:sticky;left:0;background:var(--card);z-index:1;font-weight:800;white-space:nowrap}
+.sch thead th:first-child{left:0;z-index:3}
+.sch tr.cur th,.sch td.cur{background:var(--pri-soft)}
+.sch tbody tr{cursor:pointer}
+.sch .t{display:block;white-space:nowrap}
+.sch .vs{display:block;color:var(--mut);font-size:10px}
+.sch .sc{display:block;font-weight:800;color:var(--pri);margin-top:2px}
+.sch .rest{color:var(--mut)}
+.sch .w{color:var(--pri);font-weight:800} .sch .l{color:var(--danger);font-weight:800}
+.sch td.pc{min-width:74px}
+@media print{.dock,.bar,.acts,.noprint{display:none!important}.sch{overflow:visible;max-height:none;border:0}}
 </style>
 </head>
 <body>
@@ -1082,8 +1099,8 @@ function renameDraft(i, v){
   document.querySelectorAll(`option[value="${draft.players[i].id}"]`).forEach(o => o.textContent = v || ('P' + (i + 1)));
   document.querySelectorAll(`[data-pn="${draft.players[i].id}"]`).forEach(o => o.textContent = v || ('P' + (i + 1)));
 }
-const ctxObj = ctx => ctx === 'draft' ? draft : S;
-function after(ctx){ if (ctx === 'S') markDirty(); else render(); }
+const ctxObj = ctx => ctx === 'draft' ? draft : ctx === 'ed' ? ed : S;
+function after(ctx){ if (ctx === 'S') markDirty(); else if (ctx === 'ed') drawEdit(); else render(); }
 function toggleG(ctx, id){ const p = ctxObj(ctx).players.find(x => x.id === id); p.g = p.g === 'L' ? 'P' : 'L'; after(ctx); }
 function cycleK(ctx, id){ const o = ctxObj(ctx), n = o.ngrp || 2, p = o.players.find(x => x.id === id); p.k = GRP[(GRP.indexOf(p.k || 'A') + 1) % n]; after(ctx); }
 function kTag(ctx, p){ return `<button class="gtag k${p.k || 'A'}" onclick="cycleK('${ctx}','${p.id}')" title="Tukar kumpulan rank">Kump. ${p.k || 'A'}</button>`; }
@@ -1297,7 +1314,7 @@ function startSession(){
 /* ============ Skrin permainan ============ */
 function renderGame(){
   const t = view.tab;
-  const body = t === 'match' ? matchTab() : t === 'rank' ? rankTab() : t === 'stats' ? statsTab() : membersTab();
+  const body = t === 'match' ? matchTab() : t === 'sched' ? schedTab() : t === 'rank' ? rankTab() : t === 'stats' ? statsTab() : membersTab();
   const last = view.ri === S.rounds.length - 1;
   app.innerHTML = `
   <header class="bar"><button class="ic" aria-label="Laman utama" onclick="go('home')">‹</button>
@@ -1308,7 +1325,7 @@ function renderGame(){
       ? `<button class="btn primary big" onclick="nextRound()">Pusingan Seterusnya ▶</button>`
       : `<button class="btn big" onclick="view.ri=S.rounds.length-1;render()">Ke Pusingan Terkini (${S.rounds.length}) ⏭</button>`}</div>` : ''}
     <div class="tabs">
-      ${[['match', '🏓', 'Perlawanan'], ['rank', '🏆', 'Kedudukan'], ['stats', '📊', 'Statistik'], ['members', '👥', 'Ahli & Tetapan']].map(([k, i, l]) =>
+      ${[['match', '🏓', 'Perlawanan'], ['sched', '📋', 'Jadual'], ['rank', '🏆', 'Kedudukan'], ['stats', '📊', 'Statistik'], ['members', '👥', 'Ahli']].map(([k, i, l]) =>
         `<button class="${t === k ? 'on' : ''}" onclick="view.tab='${k}';render();window.scrollTo(0,0)"><i>${i}</i>${l}</button>`).join('')}
     </div></div></nav>`;
   if (t === 'match') {
@@ -1366,7 +1383,7 @@ function matchTab(){
   ${S.dirty && last ? `<div class="notice">✏️ Perubahan ahli/tetapan disimpan dan akan digunakan mulai pusingan seterusnya.
      <button class="btn" onclick="confirmRegen()">Atau jana semula pusingan ${view.ri + 1} sekarang</button></div>` : ''}
   <div class="rchips" id="rchips">${S.rounds.map((_, i) => `<button class="${i === view.ri ? 'on' : ''}" onclick="view.ri=${i};render()">Pusingan ${i + 1}</button>`).join('')}</div>
-  <div class="rtitle"><b>Pusingan ${view.ri + 1}</b><small>${last ? '● Sedang berlangsung' : 'Sejarah'} · ${S.rounds.length} pusingan</small></div>
+  <div class="rtitle"><b>Pusingan ${view.ri + 1}</b><small>${last ? '● Sedang berlangsung' : 'Sejarah'} · ${S.rounds.length} pusingan</small><button class="btn" style="padding:6px 12px;margin-left:auto" onclick="openEdit()" aria-label="Ubah gelanggang atau pemain">✏️ Ubah</button></div>
   ${last ? timerCard() : ''}
   ${unscored ? `<div class="notice">${kotc ? '👑 Masukkan skor semua gelanggang untuk tentukan siapa naik & turun.' : '🏆 Masukkan skor semua gelanggang sebelum pusingan seterusnya.'} Tekan kotak skor untuk mengisi.</div>` : ''}
   ${r.courts.map((c, i) => { const has = Number.isFinite(c.sa) || Number.isFinite(c.sb), w = scoreWarn(c);
@@ -1389,6 +1406,139 @@ function matchTab(){
   </div>
   <section class="card sw"><div><b>Umum automatik</b><div class="hint" style="margin:2px 0 0">Baca setiap pusingan baharu</div></div>${toggle(db.settings.autoAnnounce, 'setAuto')}</section>`;
 }
+
+/* ============ Ubah sesi (tambah gelanggang / pemain) ============ */
+let ed = null;
+function openEdit(){
+  ed = {courts:S.courts, ngrp:S.ngrp || 2, players:S.players.map(p => ({...p})), newName:'', newG:'L'};
+  drawEdit();
+}
+function closeEdit(){ const m = document.getElementById('editm'); if (m) m.remove(); ed = null; }
+function drawEdit(){
+  if (!ed) return;
+  let m = document.getElementById('editm');
+  const top = m ? m.querySelector('.sheet').scrollTop : 0;
+  if (!m) { m = document.createElement('div'); m.className = 'modal'; m.id = 'editm'; m.onclick = e => { if (e.target === m) closeEdit(); }; document.body.appendChild(m); }
+  const act = ed.players.filter(p => p.active), cur = S.rounds.length, tour = TOUR.has(S.format);
+  const tagOf = p => S.mode === 'mixed' ? gTag('ed', p) : S.mode === 'ranked' ? kTag('ed', p) : '';
+  m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><h3>✏️ Ubah sesi</h3>
+    <div class="mbody">
+      <span class="lbl">Gelanggang</span>${stepper('edCourts', ed.courts)}
+      <p class="hint">${capHint(S.mode, ed.courts, act.length)}</p>
+      <div class="hrow" style="margin-top:10px"><span class="lbl">Pemain · ${act.length}/${ed.players.length} hadir</span></div>
+      ${S.mode === 'ranked' ? kControls('ed') : ''}
+      ${ed.players.map(p => `<div class="part ${p.active ? '' : 'out'}">
+        <button class="chk ${p.active ? 'on' : ''}" aria-label="${p.active ? 'Hadir — tekan untuk keluarkan' : 'Tidak hadir — tekan untuk masukkan'}" onclick="edToggle('${p.id}')">${p.active ? '✓' : ''}</button>
+        <input value="${esc(p.name)}" aria-label="Nama" onchange="edRename('${p.id}',this.value)">${tagOf(p)}</div>`).join('')}
+      <div class="prow" style="margin-top:12px">
+        ${S.mode === 'mixed' ? `<button class="gtag ${ed.newG}" onclick="ed.newG=ed.newG==='L'?'P':'L';drawEdit()">${ed.newG === 'L' ? '♂ L' : '♀ P'}</button>` : ''}
+        <input class="inp" id="edNew" placeholder="＋ Tambah pemain baharu" value="${esc(ed.newName)}" oninput="ed.newName=this.value" onkeydown="if(event.key==='Enter')edAdd()">
+        <button class="btn primary" onclick="edAdd()">Tambah</button>
+      </div>
+      <p class="hint">${tour ? 'Kejohanan: carta akan dibina semula dengan pemain/gelanggang baharu mulai pusingan seterusnya. Pusingan & skor lepas kekal dalam sejarah.' : 'Pilih sama ada perubahan digunakan mulai pusingan seterusnya, atau terus pada pusingan ' + cur + ' (susunan & skor pusingan itu diganti).'}</p>
+    </div>
+    <div class="mbtns">
+      <button class="btn primary big" onclick="edApply(false)">✓ Guna mulai pusingan seterusnya</button>
+      ${tour ? '' : `<button class="btn big" onclick="edApply(true)">↻ Guna & jana semula pusingan ${cur}</button>`}
+      <button class="btn big" onclick="closeEdit()">Batal</button>
+    </div></div>`;
+  m.querySelector('.sheet').scrollTop = top;
+}
+function edCourts(d){ ed.courts = Math.max(1, Math.min(8, ed.courts + d)); drawEdit(); }
+function edToggle(id){
+  const p = ed.players.find(x => x.id === id);
+  if (!p.active && ed.players.filter(x => x.active).length >= 40) return toast('Maksimum 40 pemain');
+  p.active = !p.active; drawEdit();
+}
+function edRename(id, v){ const p = ed.players.find(x => x.id === id); v = v.trim(); if (v) p.name = v; else drawEdit(); }
+function edAdd(){
+  if (ed.players.filter(x => x.active).length >= 40) return toast('Maksimum 40 pemain');
+  const name = (ed.newName || '').trim() || ('P' + (ed.players.length + 1));
+  ed.players.push({id:uid(), name, g:ed.newG, k:GRP[(ed.ngrp || 2) - 1], active:true, joined:S.rounds.length});
+  ed.newName = ''; drawEdit();
+  setTimeout(() => { const e = document.getElementById('edNew'); e && e.focus(); }, 0);
+}
+function edApply(regen){
+  const act = ed.players.filter(p => p.active);
+  if (capacity(S.mode, ed.courts, act.length).used < 1) return toast('Pemain tidak mencukupi untuk satu gelanggang');
+  const i = S.rounds.length - 1;
+  const go2 = () => {
+    const nAdd = ed.players.length - S.players.length, dC = ed.courts - S.courts;
+    S.courts = ed.courts; S.ngrp = ed.ngrp; S.players = ed.players.map(p => ({...p}));
+    const ids = new Set(S.players.filter(p => p.active).map(p => p.id));
+    S.locks = S.locks.filter(l => ids.has(l[0]) && ids.has(l[1]));
+    if (TOUR.has(S.format)) S.tour = null;
+    S.dirty = true;
+    let msg = 'Perubahan disimpan — digunakan mulai pusingan seterusnya';
+    if (regen && !TOUR.has(S.format)) {
+      const r = makeRound(S, i);
+      if (!r || r.done || r.wait) msg = 'Tiada susunan lain untuk pusingan semasa — digunakan mulai pusingan seterusnya';
+      else { S.rounds[i] = r; S.dirty = false; view.ri = i; msg = 'Perubahan digunakan pada pusingan ' + (i + 1); }
+    }
+    closeEdit(); view.tab = 'match'; save(); render(); toast(msg);
+    if (!S.dirty) autoAnnounce();
+  };
+  if (regen && S.rounds[i].courts.some(scored))
+    modal('Ganti pusingan ' + (i + 1) + '?', 'Skor yang telah dimasukkan pada pusingan ini akan dibuang.', [{t:'↻ Ganti', cls:'danger', fn:go2}, {t:'Batal'}]);
+  else go2();
+}
+
+/* ============ Jadual keseluruhan (semua pusingan) ============ */
+function schedTab(){
+  const nm = nameMap(), v = view.schedView || 'round', sc = scoringOn(S);
+  const maxC = Math.max(1, ...S.rounds.map(r => r.courts.length));
+  const tm = t => t.map(id => esc(nm[id] || '?')).join(' &amp; ');
+  const go3 = ri => `view.ri=${ri};view.tab='match';render();window.scrollTo(0,0)`;
+  let table;
+  if (v === 'round') {
+    table = `<table><thead><tr><th>Pusingan</th>${Array.from({length:maxC}, (_, i) => `<th>Gel. ${i + 1}</th>`).join('')}<th>Rehat</th></tr></thead><tbody>
+      ${S.rounds.map((r, ri) => `<tr class="${ri === view.ri ? 'cur' : ''}" onclick="${go3(ri)}"><th>${ri + 1}</th>
+        ${Array.from({length:maxC}, (_, ci) => { const c = r.courts[ci]; if (!c) return '<td class="rest">—</td>';
+          const has = Number.isFinite(c.sa) && Number.isFinite(c.sb);
+          return `<td class="${ri === view.ri ? 'cur' : ''}"><span class="t">${tm(c.a)}</span><span class="vs">lawan</span><span class="t">${tm(c.b)}</span>${sc ? `<span class="sc">${has ? c.sa + ' : ' + c.sb : '—'}</span>` : ''}</td>`; }).join('')}
+        <td class="rest ${ri === view.ri ? 'cur' : ''}">${r.rest.length ? r.rest.map(id => esc(nm[id] || '?')).join(', ') : '—'}</td></tr>`).join('')}</tbody></table>`;
+  } else {
+    const rows = S.players.map(p => {
+      let main = 0, rst = 0, win = 0;
+      const cells = S.rounds.map((r, ri) => {
+        for (let ci = 0; ci < r.courts.length; ci++) {
+          const c = r.courts[ci], onA = c.a.includes(p.id), onB = c.b.includes(p.id);
+          if (!onA && !onB) continue;
+          main++;
+          const mate = (onA ? c.a : c.b).filter(x => x !== p.id), foe = onA ? c.b : c.a;
+          let res = '';
+          if (scored(c)) { const w = (c.sa > c.sb) === onA; if (w) win++; res = w ? ' <span class="w">✓</span>' : ' <span class="l">✗</span>'; }
+          const who = mate.length ? '+ ' + esc(nm[mate[0]] || '?') : 'vs ' + esc(nm[foe[0]] || '?');
+          return `<td class="pc ${ri === view.ri ? 'cur' : ''}"><b>G${ci + 1}</b>${res}<span class="vs">${who}</span></td>`;
+        }
+        if (r.rest.includes(p.id)) { rst++; return `<td class="pc rest ${ri === view.ri ? 'cur' : ''}">☕</td>`; }
+        return `<td class="pc rest ${ri === view.ri ? 'cur' : ''}">·</td>`;
+      }).join('');
+      return `<tr><th>${esc(nm[p.id])}${p.active ? '' : ' <span class="rest">(keluar)</span>'}</th>${cells}<td><b>${main}</b></td><td class="rest">${rst}</td>${sc ? `<td><b>${win}</b></td>` : ''}</tr>`;
+    }).join('');
+    table = `<table><thead><tr><th>Pemain</th>${S.rounds.map((_, i) => `<th>P${i + 1}</th>`).join('')}<th>Main</th><th>Rehat</th>${sc ? '<th>Menang</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  return `
+  <div class="rtitle"><b>Jadual</b><small>${S.rounds.length} pusingan · ${S.players.filter(p => p.active).length} pemain</small><button class="btn noprint" style="padding:6px 12px;margin-left:auto" onclick="openEdit()">✏️ Ubah</button></div>
+  <div class="seg two noprint" style="margin-bottom:10px">${[['round', 'Ikut pusingan'], ['player', 'Ikut pemain']].map(([k, l]) => `<button class="${v === k ? 'on' : ''}" onclick="view.schedView='${k}';render()">${l}</button>`).join('')}</div>
+  <div class="sch">${table}</div>
+  <p class="hint noprint">${v === 'round' ? 'Tekan baris untuk buka pusingan itu.' : 'G = gelanggang, + = rakan, vs = lawan, ☕ = rehat, ✓/✗ = menang/kalah.'}</p>
+  <div class="acts noprint">
+    <button class="btn" onclick="shareText(schedText())">📤 Kongsi jadual</button>
+    <button class="btn" onclick="window.print()">🖨️ Cetak</button>
+  </div>`;
+}
+function schedText(){
+  const nm = nameMap(), n = t => t.map(id => nm[id] || '?').join(' & ');
+  const out = [`${S.name} — Jadual perlawanan`];
+  S.rounds.forEach((r, ri) => {
+    out.push('', `Pusingan ${ri + 1}`);
+    r.courts.forEach((c, ci) => out.push(`Gel.${ci + 1}: ${n(c.a)} lawan ${n(c.b)}${scored(c) ? ` (${c.sa}-${c.sb})` : ''}`));
+    if (r.rest.length) out.push('Rehat: ' + r.rest.map(id => nm[id] || '?').join(', '));
+  });
+  return out.join('\n');
+}
+
 function setScore(ri, ci, side, v){
   const c = S.rounds[ri].courts[ci];
   const n = v === '' ? null : Math.max(0, Math.min(99, parseInt(v, 10)));

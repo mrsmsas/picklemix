@@ -1,5 +1,5 @@
 // PickleMix service worker — simpan fail untuk kegunaan tanpa internet
-const CACHE = 'picklemix-v6';
+const CACHE = 'picklemix-v7';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
