@@ -17,3 +17,6 @@ Nota: selepas kembali, naikkan nombor cache dalam `sw.js` (mesti lebih tinggi da
 
 ## v5-tarikh-tempat
 Kod sebelum fungsi "Pautan ahli (baca sahaja)" (commit 8597e2e). Pulihkan: `git checkout 8597e2e -- index.html sw.js` (naikkan nama cache dalam `sw.js`).
+
+## v6-pautan-baca-sahaja
+Kod sebelum segerak langsung GAS (commit 7a964c7). Pulihkan: `git checkout 7a964c7 -- index.html sw.js` (naikkan nama cache dalam `sw.js`).
