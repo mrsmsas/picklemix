@@ -23,3 +23,6 @@ Kod sebelum segerak langsung GAS (commit 7a964c7). Pulihkan: `git checkout 7a964
 
 ## v7-segerak-gas
 Kod sebelum Putaran Seed menyokong gelanggang kurang (commit 9e63a39). Pulihkan: `git checkout 9e63a39 -- index.html sw.js` (naikkan cache dalam sw.js).
+
+## v8-sebelum-pin-ahli
+Kod sebelum sistem daftar ahli + PIN sesi (commit c1b96c9). Pulihkan: `git checkout c1b96c9 -- index.html sw.js gas/Code.gs` (naikkan cache dalam sw.js; deploy semula Code.gs sebagai New version).

@@ -409,6 +409,7 @@ function norm(s){
   if (s.tour === undefined) s.tour = null;
   if (s.timerMins == null) s.timerMins = 15;
   if (s.timerAuto == null) s.timerAuto = false;
+  if (s.pub && !s.pub.pin) s.pub = null;   // sesi terbit lama (tanpa PIN) dipadam — terbit semula dengan PIN
   return s;
 }
 db.sessions.forEach(norm);
@@ -1098,6 +1099,12 @@ function renderHome(){
       <div class="stat"><b>${names.size}</b><small>Pemain</small></div>
     </div>
     <button class="btn primary big" onclick="newDraft()">＋ Sesi / Kejohanan Baharu</button>
+    <section class="card" style="margin-top:12px">
+      ${acct() ? `<div class="hrow"><span class="lbl">👤 ${esc(acct().nick)}</span><button class="link" onclick="logout()">Log keluar</button></div>
+        <button class="btn" style="width:100%;margin:6px 0" onclick="liveSt='';view.joinCode='';go('join')">🔑 Sertai sesi (Kod + PIN)</button>
+        ${(view.mine || []).map(m => `<div class="opt" role="button" tabindex="0" onclick="openLive('${m.id}')"><span class="oi">👁</span><span class="ot"><b>${esc(m.nama || m.id.toUpperCase())}</b><small>Kod ${esc(m.id.toUpperCase())} · baca sahaja</small></span><span class="chev">›</span></div>`).join('')}`
+      : `<span class="lbl">Akaun ahli</span><p class="hint" style="margin:4px 0 8px">Daftar / log masuk sekali dengan Google untuk menyertai atau menerbitkan sesi langsung.</p>${view.signin ? '' : loginBox()}`}
+    </section>
     <span class="lbl" style="margin:24px 2px 10px">Sesi terkini</span>
     ${list.length ? list.map(s => `
       <div class="opt" role="button" tabindex="0" onclick="openSession('${s.id}')">
@@ -1110,7 +1117,7 @@ function renderHome(){
       <div><b>Umum automatik</b><div class="hint" style="margin:2px 0 0">Baca padanan setiap pusingan baharu dengan suara</div></div>
       ${toggle(db.settings.autoAnnounce, 'setAuto')}
     </section>
-    <p class="foot">Tiada akaun diperlukan · Data disimpan dalam peranti ini sahaja</p>
+    <p class="foot">Akaun hanya diperlukan untuk sesi langsung · Data sesi disimpan dalam peranti ini</p>
   </main>`;
 }
 function setAuto(v){ db.settings.autoAnnounce = v; save(); if (v) toast('Umum automatik dihidupkan'); }
@@ -1607,7 +1614,6 @@ function schedTab(){
   <p class="hint noprint">${v === 'round' ? 'Tekan baris untuk buka pusingan itu.' : 'G = gelanggang, + = rakan, vs = lawan, ☕ = rehat, ✓/✗ = menang/kalah.'}</p>
   <div class="acts noprint">
     <button class="btn" onclick="shareText(schedText())">📤 Kongsi jadual</button>
-    ${RO ? '' : '<button class="btn" onclick="shareLink()">🔗 Pautan ahli</button>'}
     <button class="btn" onclick="window.print()">🖨️ Cetak</button>
   </div>`;
 }
@@ -1698,7 +1704,8 @@ const unb64u = t => { let x = t.replace(/-/g, '+').replace(/_/g, '/'); while (x.
 const GAS_DEFAULT = {url:'https://script.google.com/macros/s/AKfycbxtcpByHTyriQBCqKISmVL6B9D4oV2b-qxXVkeAFzsDC5gwLyl7vxihiFCBYCl3ltE_ZQ/exec', cid:'440449567541-jrcg3llupdn3at5fmcn1ja0sjql6u7ca.apps.googleusercontent.com'};   // bukan rahsia; boleh diganti dalam kad Ahli
 function gasCfg(){ const g = db.settings.gas; return g && GAS_RE.test(g.url || '') && g.cid ? g : GAS_DEFAULT; }
 async function gasPost(body){
-  const r = await fetch(db.settings.gas.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)});
+  const a = acct(); if (a && body.token === undefined) body.token = a.token;
+  const r = await fetch(gasCfg().url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)});
   return r.json();
 }
 function saveGas(){
@@ -1715,24 +1722,98 @@ function loadGIS(){
     e.onload = () => ok(); e.onerror = () => no(new Error('Tidak dapat memuatkan Google Sign-In')); document.head.appendChild(e);
   });
 }
-async function startPublish(){
-  if (!gasCfg()) return;
-  view.pubId = (S.pub && S.pub.id) || (Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 8)).replace(/[^a-z0-9]/g, 'x');
-  view.signin = true; liveSt = ''; render();
+/* ---- Akaun ahli (daftar sekali dengan Google + nickname; log masuk kekal pada peranti) ---- */
+const acct = () => db.settings.acct || null;
+function saveAcct(){ try { localStorage.setItem(LS, JSON.stringify(db)); } catch(e) {} }
+let authTok = '';
+async function mountLogin(){
+  const el = document.getElementById('gbtn'); if (!el) return;
   try {
     await loadGIS();
-    google.accounts.id.initialize({client_id:gasCfg().cid, callback:onCred});
-    google.accounts.id.renderButton(document.getElementById('gbtn'), {theme:'outline', size:'large', text:'signin_with', width:260});
+    google.accounts.id.initialize({client_id:gasCfg().cid, callback:r => { authTok = r.credential; doAuth(''); }});
+    google.accounts.id.renderButton(el, {theme:'outline', size:'large', text:'signin_with', width:260});
   } catch(e) { liveSt = '⚠️ ' + e.message; render(); }
 }
-async function onCred(resp){
+async function doAuth(nick){
   liveSt = 'Mengesahkan…'; render();
   try {
-    const r = await gasPost({action:'claim', id:view.pubId, idToken:resp.credential});
+    const r = await gasPost({action:'auth', idToken:authTok, nick:nick, token:''});
     if (!r.ok) throw new Error(r.err);
-    S.pub = {id:view.pubId, key:r.key, on:true, email:r.email}; view.signin = false; save(); liveSt = ''; await syncNow(); toast('Sesi diterbitkan');
+    if (r.need === 'nick') { view.needNick = r.suggest || ''; liveSt = ''; return render(); }
+    db.settings.acct = {token:r.token, nick:r.nick, email:r.email}; saveAcct(); view.needNick = null; liveSt = '';
+    toast('Selamat datang, ' + r.nick); view.signin = false; view.mine = null;
+    if (view.screen === 'game') view.pinForm = true;
   } catch(e) { liveSt = '⚠️ ' + e.message; }
   render();
+}
+function submitNick(){
+  const n = (document.getElementById('nickIn').value || '').trim();
+  if (n.length < 2 || n.length > 20) return toast('Nickname 2–20 huruf');
+  doAuth(n);
+}
+function logout(){
+  if (!confirm('Log keluar dari akaun ini?')) return;
+  db.settings.acct = null; saveAcct(); view.mine = null; render();
+}
+function loginBox(){
+  if (view.needNick != null) return `<p class="hint" style="margin:4px 0 8px">Pilih nickname anda (dipaparkan kepada host):</p>
+    <input class="inp" id="nickIn" maxlength="20" placeholder="Nickname" style="width:100%;margin-bottom:6px" value="${esc(view.needNick)}">
+    <button class="btn primary" style="width:100%" onclick="submitNick()">Daftar</button>
+    <p class="hint" style="color:#b91c1c">${esc(liveSt)}</p>`;
+  return `<div id="gbtn" style="min-height:44px"></div><p class="hint" style="${liveSt.startsWith('⚠️') ? 'color:#b91c1c' : ''}">${esc(liveSt)}</p>`;
+}
+const newCode = () => Array.from({length:6}, () => 'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 31)]).join('');
+const newPin = () => String(Math.floor(100000 + Math.random() * 900000));
+
+/* ---- Host: terbit sesi dengan Kod + PIN ---- */
+function startPublish(){
+  liveSt = '';
+  if (!acct()) { view.signin = true; return render(); }
+  view.pinForm = true; render();
+}
+async function doPublish(){
+  const pin = (document.getElementById('pinIn').value || '').trim().toUpperCase();
+  if (!/^[A-Z0-9]{4,8}$/.test(pin)) return toast('PIN mesti 4–8 huruf/nombor');
+  const id = (S.pub && S.pub.id) || newCode();
+  liveSt = 'Menerbitkan…'; render();
+  try {
+    const r = await gasPost({action:'claim', id, pin});
+    if (!r.ok) throw new Error(r.err);
+    S.pub = {id, key:r.key, pin, on:true, email:r.email, nick:r.nick}; view.pinForm = false; view.mem = null; save(); liveSt = ''; await syncNow(); toast('Sesi diterbitkan');
+  } catch(e) { liveSt = '⚠️ ' + e.message; }
+  render();
+}
+async function reclaim(){
+  liveSt = 'Menyambung semula…'; render();
+  try {
+    const r = await gasPost({action:'claim', id:S.pub.id, pin:S.pub.pin});
+    if (!r.ok) throw new Error(r.err);
+    S.pub.key = r.key; save(); liveSt = ''; await syncNow(); toast('Disambung semula');
+  } catch(e) { liveSt = '⚠️ ' + e.message; }
+  render();
+}
+async function changePin(){
+  const pin = (document.getElementById('pinNew').value || '').trim().toUpperCase();
+  if (!/^[A-Z0-9]{4,8}$/.test(pin)) return toast('PIN mesti 4–8 huruf/nombor');
+  try {
+    const r = await gasPost({action:'setpin', id:S.pub.id, key:S.pub.key, pin});
+    if (!r.ok) throw new Error(r.err);
+    S.pub.pin = pin; save(); toast('PIN ditukar — ahli sedia ada kekal');
+  } catch(e) { liveSt = '⚠️ ' + e.message; }
+  render();
+}
+async function loadMembers(){
+  try {
+    const r = await gasPost({action:'members', id:S.pub.id, key:S.pub.key});
+    if (!r.ok) throw new Error(r.err);
+    view.mem = r.list;
+  } catch(e) { liveSt = '⚠️ ' + e.message; }
+  render();
+}
+async function kickMember(ref){
+  if (!confirm('Padam ahli ini daripada sesi?')) return;
+  try { const r = await gasPost({action:'kick', id:S.pub.id, key:S.pub.key, ref}); if (!r.ok) throw new Error(r.err); } catch(e) { liveSt = '⚠️ ' + e.message; }
+  loadMembers();
 }
 function syncSoon(){ clearTimeout(syncT); syncT = setTimeout(syncNow, 1200); }
 async function syncNow(){
@@ -1749,35 +1830,37 @@ async function stopPublish(){
   try { await gasPost({action:'delete', id:S.pub.id, key:S.pub.key}); } catch(e) {}
   S.pub = null; save(); render();
 }
-function liveUrl(){ return location.href.split('#')[0] + '#s=' + S.pub.id + '&u=' + b64u(gasCfg().url); }
-function shareLive(){ shareText(`🏓 ${S.name}${metaTxt(S) ? '\n' + metaTxt(S) : ''}\nJadual, skor & kedudukan LANGSUNG (baca sahaja):\n${liveUrl()}`); }
+function liveUrl(){ return location.href.split('#')[0] + '#s=' + S.pub.id; }
+function shareLive(){ shareText(`🏓 ${S.name}${metaTxt(S) ? '\n' + metaTxt(S) : ''}\nJadual, skor & kedudukan LANGSUNG (baca sahaja).\nLog masuk PickleMix, kemudian masukkan:\nKod sesi: ${S.pub.id.toUpperCase()}\nPIN: ${S.pub.pin}\n${liveUrl()}`); }
 function liveCard(){
-  const g = gasCfg(), pub = S.pub, msg = liveSt ? `<p class="hint" style="color:#b91c1c">${esc(liveSt)}</p>` : '';
+  const g = gasCfg(), pub = S.pub, msg = liveSt && !view.signin && !view.pinForm ? `<p class="hint" style="color:#b91c1c">${esc(liveSt)}</p>` : '';
   let body;
-  if (!g) body = `<p class="hint" style="margin:4px 0 8px">Sambungkan ke backend Google Apps Script anda (sekali sahaja). Lihat langkah setup dalam folder <b>gas/</b> di GitHub.</p>
-    <input class="inp" id="gasUrl" placeholder="URL Web App (…/exec)" style="width:100%;margin-bottom:6px" value="${esc((db.settings.gas || {}).url || '')}">
-    <input class="inp" id="gasCid" placeholder="Google Client ID (…apps.googleusercontent.com)" style="width:100%;margin-bottom:6px" value="${esc((db.settings.gas || {}).cid || '')}">
-    <button class="btn primary" style="width:100%" onclick="saveGas()">Simpan sambungan</button>`;
-  else if (view.signin) body = `<p class="hint" style="margin:4px 0 8px">Log masuk dengan akaun Google host yang dibenarkan:</p><div id="gbtn" style="min-height:44px"></div>
-    <button class="btn" style="margin-top:8px" onclick="view.signin=false;liveSt='';render()">Batal</button>`;
-  else if (pub && pub.on) body = `<p style="margin:4px 0">🟢 <b>Langsung</b> — ahli nampak skor terus.${pub.at ? ` <small>Segerak terakhir ${esc(new Date(pub.at).toLocaleTimeString('ms-MY'))}</small>` : ''}</p>
-    <p class="hint" style="margin:0 0 8px">Host: ${esc(pub.email || '')}. Hanya peranti ini (yang log masuk) boleh mengemas kini.</p>
-    <button class="btn primary" style="width:100%;margin-bottom:6px" onclick="shareLive()">📤 Kongsi pautan langsung</button>
+  if (view.signin && !acct()) body = `<p class="hint" style="margin:4px 0 8px">Log masuk / daftar dengan Google (sekali sahaja, kekal pada peranti ini):</p>${loginBox()}
+    <button class="btn" style="margin-top:8px" onclick="view.signin=false;view.needNick=null;liveSt='';render()">Batal</button>`;
+  else if (view.pinForm) body = `<p class="hint" style="margin:4px 0 8px">Tetapkan <b>PIN</b> (4–8 huruf/nombor). Ahli perlu Kod sesi + PIN ini untuk melihat sesi.</p>
+    <input class="inp" id="pinIn" maxlength="8" value="${newPin()}" style="width:100%;margin-bottom:6px;letter-spacing:3px;font-weight:700;text-align:center">
+    <button class="btn primary" style="width:100%" onclick="doPublish()">🌐 Terbitkan</button>
+    <button class="btn" style="width:100%;margin-top:6px" onclick="view.pinForm=false;liveSt='';render()">Batal</button>
+    <p class="hint" style="${liveSt.startsWith('⚠️') ? 'color:#b91c1c' : ''}">${esc(liveSt)}</p>`;
+  else if (pub && pub.on) body = `<p style="margin:4px 0">🟢 <b>Langsung</b> — ahli yang sertai nampak skor terus.${pub.at ? ` <small>Segerak terakhir ${esc(new Date(pub.at).toLocaleTimeString('ms-MY'))}</small>` : ''}</p>
+    <div class="statrow" style="margin:6px 0"><div class="stat"><b style="letter-spacing:2px">${esc(pub.id.toUpperCase())}</b><small>Kod sesi</small></div><div class="stat"><b style="letter-spacing:2px">${esc(pub.pin)}</b><small>PIN</small></div></div>
+    <button class="btn primary" style="width:100%;margin-bottom:6px" onclick="shareLive()">📤 Kongsi Kod + PIN</button>
+    <div class="row2" style="margin:0 0 6px"><input class="inp" id="pinNew" maxlength="8" placeholder="PIN baharu" style="width:100%"><button class="btn" onclick="changePin()">Tukar PIN</button></div>
+    <button class="btn" style="width:100%;margin-bottom:6px" onclick="loadMembers()">👥 Ahli yang sertai${view.mem ? ' (' + view.mem.length + ')' : ''}</button>
+    ${view.mem ? (view.mem.length ? view.mem.map(m => `<div class="hrow" style="padding:4px 2px"><span>👤 ${esc(m.nick)} <small class="hint">${esc(new Date(m.at).toLocaleDateString('ms-MY'))}</small></span><button class="link" style="color:var(--mut)" aria-label="Padam ahli" onclick="kickMember('${m.ref}')">🗑</button></div>`).join('') : '<p class="hint">Belum ada ahli sertai.</p>') : ''}
     <div class="seg two"><button class="btn" onclick="syncNow().then(()=>toast('Disegerak'))">🔄 Segerak sekarang</button><button class="btn" onclick="stopPublish()">⏹ Henti terbit</button></div>
-    <button class="btn" style="width:100%;margin-top:6px" onclick="startPublish()">🔑 Log masuk semula (jika gagal segerak)</button>`;
-  else body = `<p class="hint" style="margin:4px 0 8px">Terbitkan sesi ini supaya ahli boleh lihat jadual, skor dan kedudukan secara langsung. Hanya host yang log masuk Google boleh mengubah data.</p>
-    <button class="btn primary" style="width:100%" onclick="startPublish()">🌐 Terbitkan sesi (langsung)</button>`;
+    <button class="btn" style="width:100%;margin-top:6px" onclick="reclaim()">🔑 Sambung semula (jika gagal segerak)</button>`;
+  else body = `<p class="hint" style="margin:4px 0 8px">Terbitkan sesi ini dengan <b>PIN</b>. Hanya ahli berdaftar yang tahu Kod + PIN boleh melihat jadual, skor dan kedudukan (baca sahaja). Hanya host boleh mengubah data.</p>
+    <button class="btn primary" style="width:100%" onclick="startPublish()">🌐 Terbitkan sesi</button>${acct() ? `<p class="hint">Log masuk sebagai ${esc(acct().nick)}</p>` : ''}`;
   return `<section class="card">
-    <div class="hrow"><span class="lbl">🔗 Pautan untuk ahli (baca sahaja)</span>${g ? '<button class="btn" style="padding:4px 10px" onclick="if(confirm(\'Padam sambungan backend?\'))clearGas()">⚙️</button>' : ''}</div>
+    <div class="hrow"><span class="lbl">🔗 Sesi langsung untuk ahli (baca sahaja)</span>${db.settings.gas ? '<button class="btn" style="padding:4px 10px" onclick="if(confirm(\'Padam sambungan backend?\'))clearGas()">⚙️</button>' : ''}</div>
     ${body}${msg}
-    <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:8px"><div class="hint" style="margin:0 0 6px">Tanpa backend: pautan gambar (tidak dikemas kini sendiri)</div>
-    <button class="btn" style="width:100%" onclick="shareLink()">🔗 Kongsi pautan gambar</button></div>
   </section>`;
 }
 async function liveTick(first){
   try {
-    const r = await (await fetch(LIVE.u + '?action=get&id=' + LIVE.id, {cache:'no-store'})).json();
-    if (!r.ok) throw new Error(r.err === 'tiada' ? 'tiada' : (r.err || 'ralat'));
+    const r = await (await fetch(LIVE.u + '?action=get&id=' + LIVE.id + '&t=' + encodeURIComponent((acct() || {}).token || ''), {cache:'no-store'})).json();
+    if (!r.ok) throw new Error(['tiada', 'akses', 'login'].includes(r.err) ? r.err : (r.err || 'ralat'));
     if (first || r.ts !== liveTs) {
       S = buildFromSnap(r.data); liveTs = r.ts;
       if (first) { let me = ''; try { me = localStorage.getItem('picklemix_me') || ''; } catch(e) {}
@@ -1785,7 +1868,10 @@ async function liveTick(first){
       liveErr = ''; render();
     } else if (liveErr) { liveErr = ''; render(); }
   } catch(e) {
-    if (first || e.message === 'tiada') { S = null; view = {screen:'viewerr', msg:e.message === 'tiada' ? 'Sesi tidak dijumpai atau telah dihentikan oleh penganjur.' : 'Tidak dapat menyambung. Semak internet anda dan cuba lagi.'}; render(); }
+    if (first || ['tiada', 'akses', 'login'].includes(e.message)) {
+      const M = {tiada:'Sesi tidak dijumpai atau telah dihentikan oleh penganjur.', akses:'Anda tidak lagi menyertai sesi ini. Sertai semula dengan Kod + PIN.', login:'Sila log masuk semula.'};
+      if (e.message !== 'ralat' && M[e.message]) clearInterval(liveTimer);
+      S = null; view = {screen:'viewerr', msg:M[e.message] || 'Tidak dapat menyambung. Semak internet anda dan cuba lagi.'}; render(); }
     else if (!liveErr) { liveErr = 'Tiada sambungan — cuba semula…'; render(); }
   }
 }
@@ -1793,8 +1879,42 @@ function startLive(id, u){
   RO = true; LIVE = {id, u};
   app.innerHTML = '<main style="padding:60px 20px;text-align:center"><h2>Memuatkan skor…</h2></main>';
   liveTick(true);
+  clearInterval(liveTimer);
   liveTimer = setInterval(() => { if (!document.hidden) liveTick(false); }, 6000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) liveTick(false); });
+  if (!startLive.vis) { startLive.vis = 1; document.addEventListener('visibilitychange', () => { if (LIVE && !document.hidden) liveTick(false); }); }
+}
+function openLive(id){
+  RO = true; S = null; liveTs = 0; liveErr = '';
+  startLive(id, gasCfg().url);
+}
+function leaveLive(){
+  clearInterval(liveTimer); RO = false; LIVE = false; S = null; liveTs = 0;
+  try { history.replaceState(null, '', location.pathname); } catch(e) {}
+  view = {screen:'home', tab:'match', ri:0, open:null, rankView:'ind'}; render();
+}
+/* ---- Ahli: sertai sesi dengan Kod + PIN ---- */
+async function loadMine(){
+  if (!acct() || view.mineAt && Date.now() - view.mineAt < 30000) return;
+  view.mineAt = Date.now();
+  try { const r = await gasPost({action:'mine'}); if (r.ok) { view.mine = r.list; if (view.screen === 'home') render(); } else if (r.err === 'login') { db.settings.acct = null; saveAcct(); render(); } } catch(e) {}
+}
+async function joinSession(){
+  const id = (document.getElementById('jCode').value || '').trim().toLowerCase(), pin = (document.getElementById('jPin').value || '').trim().toUpperCase();
+  if (!/^[a-z0-9]{6,20}$/.test(id) || !pin) return toast('Masukkan Kod sesi dan PIN');
+  liveSt = 'Menyemak…'; render();
+  try {
+    const r = await gasPost({action:'join', id, pin});
+    if (!r.ok) throw new Error(r.err);
+    liveSt = ''; view.mine = null; view.mineAt = 0; history.replaceState(null, '', location.pathname); openLive(id);
+  } catch(e) { liveSt = '⚠️ ' + e.message; view.joinCode = id; render(); }
+}
+function renderJoin(){
+  app.innerHTML = `<header class="bar"><button class="ic" aria-label="Laman utama" onclick="liveSt='';history.replaceState(null,'',location.pathname);go('home')">‹</button><h1>Sertai sesi<small>Baca sahaja</small></h1><span style="width:40px"></span></header>
+  <main><section class="card">${acct() ? `<p class="hint" style="margin:0 0 8px">Masukkan Kod sesi dan PIN yang diberi oleh host.</p>
+    <input class="inp" id="jCode" maxlength="20" placeholder="Kod sesi" autocapitalize="characters" style="width:100%;margin-bottom:6px;letter-spacing:3px;text-transform:uppercase;font-weight:700" value="${esc((view.joinCode || '').toUpperCase())}">
+    <input class="inp" id="jPin" maxlength="8" placeholder="PIN" autocapitalize="characters" style="width:100%;margin-bottom:6px;letter-spacing:3px;font-weight:700" onkeydown="if(event.key==='Enter')joinSession()">
+    <button class="btn primary" style="width:100%" onclick="joinSession()">Sertai</button>
+    <p class="hint" style="${liveSt.startsWith('⚠️') ? 'color:#b91c1c' : ''}">${esc(liveSt)}</p>` : `<p class="hint" style="margin:0 0 8px">Log masuk / daftar dahulu (sekali sahaja):</p>${loginBox()}`}</section></main>`;
 }
 
 function meTab(){
@@ -1822,7 +1942,7 @@ function meTab(){
 function renderViewer(){
   const t = view.tab, body = t === 'rank' ? rankTab() : t === 'me' ? meTab() : schedTab();
   app.innerHTML = `
-  <header class="bar"><span style="width:40px"></span><h1>${esc(S.name)}<small>${FORMATS[S.format]} · ${S.players.filter(p => p.active).length} pemain · 👁 baca sahaja</small></h1><span style="width:40px"></span></header>
+  <header class="bar">${LIVE ? '<button class="ic" aria-label="Laman utama" onclick="leaveLive()">‹</button>' : '<span style="width:40px"></span>'}<h1>${esc(S.name)}<small>${FORMATS[S.format]} · ${S.players.filter(p => p.active).length} pemain · 👁 baca sahaja</small></h1><span style="width:40px"></span></header>
   <main id="main" style="padding-bottom:100px">
     ${metaLine(S)}
     <div class="notice">${LIVE ? (liveErr ? '🟠 ' + esc(liveErr) : '🟢 Langsung — dikemas kini automatik') + ' · data ' + esc(fmtDate(S.updated)) : '👁 Paparan baca sahaja — data setakat ' + esc(fmtDate(S.updated)) + '. Minta penganjur kongsi pautan baharu untuk melihat skor terkini.'}</div>
@@ -2276,30 +2396,21 @@ function render(){
   if (view.screen === 'viewer' && S) renderViewer();
   else if (view.screen === 'viewerr') app.innerHTML = '<main style="padding:40px 20px;text-align:center"><h2>Tidak dapat dibuka</h2><p class="hint">' + esc(view.msg || 'Pautan rosak atau tidak lengkap. Minta penganjur kongsi semula pautan skor.') + '</p><p><a class="btn primary" href="' + location.pathname + '">Buka PickleMix</a></p></main>';
   else if (view.screen === 'tv' && S) renderTV();
+  else if (view.screen === 'join') renderJoin();
   else if (view.screen === 'setup') renderSetup();
   else if (view.screen === 'game' && S) renderGame();
-  else { view.screen = 'home'; renderHome(); }
+  else { view.screen = 'home'; renderHome(); loadMine(); }
+  if (!RO && !acct() && view.needNick == null && (view.screen === 'home' || view.screen === 'join' || view.signin)) setTimeout(mountLogin, 0);
 }
 if (TVWIN) {
   S = db.sessions.find(s => s.id === location.hash.slice(4)) || null;
   if (S) { view.screen = 'tv'; keepAwake(); }
 }
-const LV = location.hash.match(/^#s=([a-z0-9]{6,20})&u=([\w-]+)$/);
-let LVU = ''; if (LV) { try { LVU = unb64u(LV[2]); } catch(e) {} }
-if (LV && GAS_RE.test(LVU)) {
-  window.addEventListener('hashchange', () => location.reload());
-  startLive(LV[1], LVU);
-} else if (/^#v=/.test(location.hash)) {
-  RO = true;
-  window.addEventListener('hashchange', () => { if (/^#v=/.test(location.hash)) location.reload(); });
-  (async () => {
-    try {
-      S = buildFromSnap(await unpackSnap(location.hash.slice(3)));
-      let me = ''; try { me = localStorage.getItem('picklemix_me') || ''; } catch(e) {}
-      view = {screen:'viewer', tab:'sched', ri:S.rounds.length - 1, open:null, rankView:'ind', me:S.players.some(p => p.id === me) ? me : '', schedView:'round'};
-    } catch(e) { S = null; view = {screen:'viewerr'}; }
-    render();
-  })();
+const LV = location.hash.match(/^#s=([a-z0-9]{6,20})(?:&u=[\w-]+)?$/);
+window.addEventListener('hashchange', () => { if (/^#s=/.test(location.hash)) location.reload(); });
+if (LV) {   // pautan sesi: terus buka jika sudah sertai, atau minta Kod + PIN
+  view = {screen:'join', joinCode:LV[1]}; render();
+  if (acct()) gasPost({action:'mine'}).then(r => { if (r.ok && r.list.some(m => m.id === LV[1])) openLive(LV[1]); }).catch(() => {});
 } else render();
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
