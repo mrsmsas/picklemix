@@ -343,10 +343,12 @@ details summary{color:var(--mut);font-size:13px;font-weight:600;cursor:pointer;m
 /* ============ Data & storage ============ */
 const LS = 'picklemix_v1';
 const MODES = {doubles:'Beregu', singles:'Perseorangan', mixed:'Beregu Campuran'};
-const FORMATS = {mix:'Mix & Match', rr:'Round Robin', kotc:'Raja Gelanggang', se:'Kalah Mati', pool:'Kumpulan + Kalah Mati', swiss:'Swiss'};
+const FORMATS = {mix:'Mix & Match', rrp:'Tukar Pasangan', rr:'Round Robin', kotc:'Raja Gelanggang', se:'Kalah Mati', pool:'Kumpulan + Kalah Mati', swiss:'Swiss'};
 const TOUR = new Set(['se', 'pool', 'swiss']);
-const FICON = {mix:'🔀', rr:'🔁', kotc:'👑', se:'🏆', pool:'🗂️', swiss:'♟️'};
-const FSHORT = {mix:'Rakan & lawan bertukar setiap pusingan secara adil', rr:'Semua berlawan dengan semua, tepat sekali',
+const FICON = {mix:'🔀', rrp:'🔄', rr:'🔁', kotc:'👑', se:'🏆', pool:'🗂️', swiss:'♟️'};
+const FSHORT = {mix:'Rakan & lawan bertukar setiap pusingan secara adil',
+  rrp:'Round robin individu — pasangan bertukar setiap game, setiap pemain berganding dengan semua pemain lain sekali',
+  rr:'Pasukan/pemain tetap — semua berlawan dengan semua, tepat sekali',
   kotc:'Menang naik gelanggang, kalah turun', se:'Kalah sekali terus terkeluar — dengan carta bracket',
   pool:'Peringkat kumpulan, kemudian kalah mati', swiss:'Rekod sama berlawan — tiada siapa tersingkir'};
 const MICON = {singles:'👤', doubles:'👥', mixed:'⚤'};
@@ -578,6 +580,68 @@ function rrGen(sess, upto){
   };
 }
 
+/* ============ Enjin 2b: Round Robin Tukar Pasangan (round robin individu) ============ */
+// Sasaran: setiap gandingan rakan yang dibenarkan (semua pasangan pemain; beregu campuran: L+P sahaja)
+// dimainkan tepat sekali. Setiap pusingan pilih gandingan yang belum dimainkan, kemudian temukan
+// pasukan supaya lawan juga berbeza. Tamat bila semua gandingan selesai.
+function rrpState(sess, upto){
+  const act = sess.players.filter(p => p.active), mixed = sess.mode === 'mixed';
+  const allowed = [];
+  for (let i = 0; i < act.length; i++) for (let j = i + 1; j < act.length; j++)
+    if (!mixed || act[i].g !== act[j].g) allowed.push(pk(act[i].id, act[j].id));
+  const used = {};
+  sess.rounds.slice(sess.rrStart || 0, upto).forEach(r => r.courts.forEach(c => [c.a, c.b].forEach(t => {
+    if (t.length === 2) { const k = pk(t[0], t[1]); used[k] = (used[k] || 0) + 1; } })));
+  const remaining = allowed.filter(k => !used[k]);
+  const cap = capacity(sess.mode, sess.courts, act.length);
+  const perRound = Math.max(1, cap.used * 2);
+  return {act, allowed, used, remaining, total: allowed.length, done: allowed.length - remaining.length, perRound, cap};
+}
+function rrpGen(sess, upto){
+  const R = rrpState(sess, upto);
+  if (R.cap.used < 1) return null;
+  if (!R.remaining.length) return {done:true};
+  const T = computeStats(sess, upto), need = R.cap.used * 2;
+  const left = {}; R.act.forEach(p => left[p.id] = 0);
+  R.remaining.forEach(k => { const [a, b] = k.split('|'); left[a]++; left[b]++; });
+  const gOf = {}; R.act.forEach(p => gOf[p.id] = p.g);
+  const known = R.act.map(p => T.st[p.id]).filter(s => s.eligible > 0).map(s => s.played / s.eligible);
+  const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 1;
+  const ratio = id => { const s = T.st[id]; return s.eligible ? s.played / s.eligible : avg; };
+  const soft = R.cap.rest >= R.cap.playing;
+  let best = null, bestSc = -Infinity;
+  for (let it = 0; it < CANDIDATES; it++) {
+    // 1) pilih gandingan baharu yang tidak bertindih — utamakan pemain yang paling banyak gandingan tertinggal / baru berehat
+    const ord = R.remaining.map(k => { const [a, b] = k.split('|');
+      return {a, b, p: left[a] + left[b] + (T.lastRest.has(a) ? 6 : 0) + (T.lastRest.has(b) ? 6 : 0) + Math.random() * 4}; })
+      .sort((x, y) => y.p - x.p);
+    const busy = new Set(), teams = [];
+    for (const o of ord) { if (teams.length >= need) break; if (busy.has(o.a) || busy.has(o.b)) continue; busy.add(o.a); busy.add(o.b); teams.push([o.a, o.b]); }
+    const fresh = teams.length;
+    // 2) jika tidak cukup, isi gelanggang dengan gandingan ulangan yang paling jarang
+    if (teams.length < need) {
+      const free = shuffle(R.act.map(p => p.id).filter(id => !busy.has(id)))
+        .sort((a, b) => (T.lastRest.has(b) ? 1 : 0) - (T.lastRest.has(a) ? 1 : 0) || ratio(a) - ratio(b));
+      const pool = free.slice(0, (need - teams.length) * 2);
+      teams.push(...greedyPair(pool, (x, y) => (R.used[pk(x, y)] || 0) * 10 + (sess.mode === 'mixed' && gOf[x] === gOf[y] ? 30 : 0)));
+      pool.forEach(id => busy.add(id));
+    }
+    // 3) temukan pasukan — elak lawan berulang
+    shuffle(teams);
+    const courts = greedyPair(teams.map((t, i) => i), (i, j) => {
+      let c = 0; teams[i].forEach(x => teams[j].forEach(y => { const k = pk(x, y); c += (T.opp[k] || 0) * 4 + (T.lastOpp.has(k) ? 6 : 0); }));
+      return c + (T.quad[qk([...teams[i], ...teams[j]])] || 0) * 25;
+    }).map(([i, j]) => ({a:teams[i], b:teams[j], sa:null, sb:null}));
+    const rest = R.act.map(p => p.id).filter(id => !busy.has(id));
+    let sc = fresh * 100;
+    rest.forEach(id => { if (T.lastRest.has(id)) sc -= soft ? 12 : 400; sc -= (1 - ratio(id)) * 30 + left[id] * 2; });
+    courts.forEach(c => { c.a.forEach(x => c.b.forEach(y => { sc -= (T.opp[pk(x, y)] || 0) * 3; }));
+      sc -= (T.quad[qk([...c.a, ...c.b])] || 0) * 25; });
+    if (sc > bestSc) { bestSc = sc; best = {courts, rest}; }
+  }
+  return {courts: best.courts, rest: best.rest, ts: Date.now()};
+}
+
 /* ============ Enjin 3: Raja Gelanggang (King of the Court) ============ */
 // Pemenang naik satu gelanggang, yang kalah turun. Gelanggang 1 = gelanggang raja.
 // Yang kalah di gelanggang paling bawah berehat; pemain yang paling lama berehat masuk.
@@ -787,7 +851,8 @@ function tourGen(sess, upto){
 
 function makeRound(sess, upto){
   if (TOUR.has(sess.format)) return tourGen(sess, upto);
-  if (sess.format === 'rr') return rrGen(sess, upto);
+  if (sess.format === 'rr' || (sess.format === 'rrp' && sess.mode === 'singles')) return rrGen(sess, upto);
+  if (sess.format === 'rrp') return rrpGen(sess, upto);
   if (sess.format === 'kotc' && upto > 0 && sess.rounds[upto - 1].courts.every(scored)) return kotcGen(sess, upto);
   return generate(sess, upto);
 }
@@ -907,6 +972,9 @@ function gBtn(ctx, p){ return `<button class="g ${p.g}" onclick="toggleG('${ctx}
 
 function formatDesc(s){
   if (s.format === 'mix') return 'Rakan & lawan bertukar setiap pusingan secara adil — 150 susunan dinilai, yang terbaik dipilih.';
+  if (s.format === 'rrp') return s.mode === 'singles'
+    ? 'Mod perseorangan tiada pasangan — format ini berjalan sebagai Round Robin biasa (setiap pemain lawan semua pemain lain sekali).'
+    : 'Pasangan bertukar setiap game. Jadual disusun supaya setiap pemain berganding dengan semua pemain lain tepat sekali' + (s.mode === 'mixed' ? ' (setiap Lelaki dengan setiap Perempuan)' : '') + ', dan lawan juga sentiasa berbeza. Mata & kemenangan dikira secara individu. Tamat bila semua gandingan selesai.';
   if (s.format === 'rr') return s.mode === 'singles'
     ? 'Setiap pemain berlawan dengan semua pemain lain tepat sekali.'
     : 'Pasukan tetap — setiap pasukan berlawan dengan semua pasukan lain tepat sekali. Pemain tanpa pasangan tetap akan dipasangkan automatik ikut urutan senarai' + (s.mode === 'mixed' ? ' (L + P)' : '') + '.';
@@ -918,10 +986,14 @@ function formatDesc(s){
   return `Setiap pusingan, ${u} dengan rekod sama berlawan — tiada siapa terkeluar dan tiada ulangan lawan. Juara = rekod terbaik selepas semua pusingan.${teamNote}`;
 }
 function tourPreview(s){
-  if (s.format !== 'rr' && !TOUR.has(s.format)) return '';
+  if (s.format === 'rrp' && s.mode !== 'singles') {
+    const R = rrpState(s, 0);
+    return `<p class="hint">📋 ${R.act.length} pemain · ${R.total} gandingan rakan · ${Math.ceil(R.total / 2)} game · anggaran ${Math.ceil(R.total / R.perRound)} pusingan</p>`;
+  }
+  if (s.format !== 'rr' && s.format !== 'rrp' && !TOUR.has(s.format)) return '';
   const {units, extra, maxM} = rrState(s, 0), n = units.length, c = s.tcfg;
   let m;
-  if (s.format === 'rr') m = n * (n - 1) / 2;
+  if (s.format === 'rr' || s.format === 'rrp') m = n * (n - 1) / 2;
   else if (s.format === 'se') m = Math.max(0, n - 1) + (c.third && n >= 4 ? 1 : 0);
   else if (s.format === 'swiss') m = c.swissRounds * Math.floor(n / 2);
   else {
@@ -962,7 +1034,7 @@ function settingsHTML(ctx, withFmt = true){
   const seg = keys => `<div class="seg">${keys.map(k => `<button class="${s.format === k ? 'on' : ''}" onclick="setFmt('${ctx}','${k}')">${FORMATS[k]}</button>`).join('')}</div>`;
   return `<section class="card">
     ${withFmt ? `<span class="lbl">Format sosial</span>
-    ${seg(['mix', 'rr', 'kotc'])}
+    ${seg(['mix', 'rrp', 'rr', 'kotc']).replace('class="seg"', 'class="seg" style="grid-template-columns:1fr 1fr"')}
     <span class="lbl" style="margin-top:12px">Format kejohanan 🏆</span>
     ${seg(['se', 'pool', 'swiss'])}` : `<span class="lbl">${FICON[s.format]} ${FORMATS[s.format]} — tetapan</span>`}
     <p class="hint">${formatDesc(s)}</p>
@@ -989,7 +1061,7 @@ function setOpt(ctx, k, v){ ctxObj(ctx)[k] = v; if (ctx === 'S') { save(); rende
 
 function locksHTML(ctx){
   const src = ctxObj(ctx);
-  if (src.format === 'kotc') return '';
+  if (src.format === 'kotc' || src.format === 'rrp') return '';
   const players = src.players.filter(p => p.active);
   const lockedIds = new Set(src.locks.flat());
   const free = players.filter(p => !lockedIds.has(p.id));
@@ -1018,7 +1090,7 @@ function renderSetup(){
   const fmtOpt = k => `<button class="opt ${d.format === k ? 'on' : ''}" onclick="pickFmt('${k}')"><span class="oi">${FICON[k]}</span><span class="ot"><b>${FORMATS[k]}</b><small>${FSHORT[k]}</small></span><span class="chev">›</span></button>`;
   let body = '';
   if (st === 1) body = `<div class="wq">Pilih format permainan</div>
-    <span class="lbl">Sosial</span>${['mix', 'rr', 'kotc'].map(fmtOpt).join('')}
+    <span class="lbl">Sosial</span>${['mix', 'rrp', 'rr', 'kotc'].map(fmtOpt).join('')}
     <span class="lbl" style="margin-top:16px">Kejohanan 🏆</span>${['se', 'pool', 'swiss'].map(fmtOpt).join('')}`;
   if (st === 2) body = `<div class="wq">Mod & gelanggang</div>
     ${Object.keys(MODES).map(k => `<button class="opt ${d.mode === k ? 'on' : ''}" onclick="setMode('${k}')"><span class="oi">${MICON[k]}</span><span class="ot"><b>${MODES[k]}</b><small>${MSHORT[k]}</small></span></button>`).join('')}
@@ -1046,7 +1118,7 @@ function renderSetup(){
       <div class="sum"><span>Gelanggang</span><b>${d.courts} (${c.used} digunakan)</b></div>
       <div class="sum"><span>Pemain</span><b>${d.players.length}${d.mode === 'mixed' ? ` · ${L} L · ${d.players.length - L} P` : ''}</b></div>
       ${scoringOn(d) ? `<div class="sum"><span>Skor</span><b>Hingga ${d.target}${d.winBy2 ? ', beza 2' : ''}</b></div>` : '<div class="sum"><span>Skor</span><b>Tidak direkod</b></div>'}
-      ${d.mode !== 'singles' && d.format !== 'kotc' ? `<div class="sum"><span>Pasangan tetap</span><b>${d.locks.length}</b></div>` : ''}
+      ${d.mode !== 'singles' && d.format !== 'kotc' && d.format !== 'rrp' ? `<div class="sum"><span>Pasangan tetap</span><b>${d.locks.length}</b></div>` : ''}
     </section>
     ${tourPreview(d)}
     <p class="hint">${formatDesc(d)}</p>`;
@@ -1122,7 +1194,12 @@ function matchTab(){
     ${t.length === 2 && lockSet.has(pk(t[0], t[1])) && !kotc ? '<small class="hint" style="margin:0">🔒 tetap</small>' : ''}</div>`;
   const val = v => Number.isFinite(v) ? v : '';
   let rrCard = '';
-  if (S.format === 'rr' && last) {
+  if (S.format === 'rrp' && S.mode !== 'singles' && last) {
+    const R = rrpState(S, S.rounds.length), pct = R.total ? Math.round(R.done / R.total * 100) : 0;
+    rrCard = `<section class="card"><div class="hrow"><span class="lbl">🔄 Gandingan rakan selesai</span><b>${R.done}/${R.total}</b></div>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <p class="hint">${R.remaining.length ? `${R.remaining.length} gandingan lagi · anggaran ${Math.ceil(R.remaining.length / R.perRound)} pusingan` : '🎉 Semua pemain telah berganding dengan semua pemain lain'}</p></section>`;
+  } else if (S.format === 'rr' && last) {
     const R = rrState(S, S.rounds.length);
     const pct = R.total ? Math.round(R.done / R.total * 100) : 0;
     rrCard = `<section class="card"><div class="hrow"><span class="lbl">Kemajuan Round Robin</span><b>${R.done}/${R.total}</b></div>
@@ -1241,7 +1318,8 @@ function nextRound(){
   save(); render(); window.scrollTo(0, 0); autoAnnounce();
 }
 function rrDone(){
-  modal('Round Robin selesai 🎉', 'Setiap ' + (S.mode === 'singles' ? 'pemain' : 'pasukan') + ' telah berlawan dengan semua yang lain. Lihat kedudukan akhir atau mulakan kitaran baharu.',
+  const rrp = S.format === 'rrp' && S.mode !== 'singles';
+  modal('Round Robin selesai 🎉', (rrp ? 'Setiap pemain telah berganding dengan semua pemain lain.' : 'Setiap ' + (S.mode === 'singles' ? 'pemain' : 'pasukan') + ' telah berlawan dengan semua yang lain.') + ' Lihat kedudukan akhir atau mulakan kitaran baharu.',
     [{t:'🏆 Lihat Kedudukan', cls:'primary', fn:() => { view.tab = 'rank'; render(); }},
      {t:'↻ Mula kitaran Round Robin baharu', fn:() => { S.rrStart = S.rounds.length; nextRound(); }},
      {t:'Tutup'}]);
@@ -1298,7 +1376,7 @@ if ('speechSynthesis' in window) speechSynthesis.getVoices();
 function rankTab(){
   if (!scoringOn(S)) return `<section class="card"><div class="empty">Rekod skor dimatikan untuk sesi ini.<br><button class="btn primary" style="margin-top:10px" onclick="S.scoring=true;save();render()">Hidupkan rekod skor</button></div></section>`;
   const nm = nameMap(), {players, teams} = standings(S);
-  const canTeam = S.mode !== 'singles' && S.format !== 'kotc' && teams.length > 0;
+  const canTeam = S.mode !== 'singles' && S.format !== 'kotc' && S.format !== 'rrp' && teams.length > 0;
   const showTeam = canTeam && view.rankView === 'team';
   const act = new Set(S.players.filter(p => p.active).map(p => p.id));
   const rows = showTeam ? teams : players.filter(p => p.mp > 0 || act.has(p.key));
