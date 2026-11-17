@@ -1689,7 +1689,8 @@ let LIVE = false, liveTs = 0, liveErr = '', liveSt = '', syncT = null, liveTimer
 const GAS_RE = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
 const b64u = t => btoa(unescape(encodeURIComponent(t))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64u = t => { let x = t.replace(/-/g, '+').replace(/_/g, '/'); while (x.length % 4) x += '='; return decodeURIComponent(escape(atob(x))); };
-function gasCfg(){ return db.settings.gas && GAS_RE.test(db.settings.gas.url || '') && db.settings.gas.cid ? db.settings.gas : null; }
+const GAS_DEFAULT = {url:'https://script.google.com/macros/s/AKfycbxtcpByHTyriQBCqKISmVL6B9D4oV2b-qxXVkeAFzsDC5gwLyl7vxihiFCBYCl3ltE_ZQ/exec', cid:'440449567541-jrcg3llupdn3at5fmcn1ja0sjql6u7ca.apps.googleusercontent.com'};   // bukan rahsia; boleh diganti dalam kad Ahli
+function gasCfg(){ const g = db.settings.gas; return g && GAS_RE.test(g.url || '') && g.cid ? g : GAS_DEFAULT; }
 async function gasPost(body){
   const r = await fetch(db.settings.gas.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)});
   return r.json();

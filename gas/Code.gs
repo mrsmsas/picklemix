@@ -39,6 +39,7 @@ function doGet(e) {
     const str = JSON.stringify(rec);
     if (str.length < 90000) cache.put(ck, str, 10);
   }
+  if (!rec.data) return out_({ok: false, err: 'tiada'});
   if (p.action === 'ver') return out_({ok: true, ts: rec.ts});
   return out_({ok: true, ts: rec.ts, data: JSON.parse(rec.data)});
 }
