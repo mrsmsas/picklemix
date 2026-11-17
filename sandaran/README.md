@@ -14,3 +14,6 @@ Salin semula dua fail (daripada folder versi yang dikehendaki) ke akar repo, kem
 Atau guna commit lama: `git checkout 67c6fc7 -- index.html sw.js` (v1) atau `git checkout a440711 -- index.html sw.js` (v2) atau `git checkout c224eef -- index.html sw.js` (v3) atau `git checkout d0d33b3 -- index.html sw.js` (v4)
 
 Nota: selepas kembali, naikkan nombor cache dalam `sw.js` (mesti lebih tinggi daripada cache yang sedang aktif, kini `picklemix-v9`, cth. `picklemix-v10`) supaya pelayar/PWA mengambil versi terbaharu.
+
+## v5-tarikh-tempat
+Kod sebelum fungsi "Pautan ahli (baca sahaja)" (commit 8597e2e). Pulihkan: `git checkout 8597e2e -- index.html sw.js` (naikkan nama cache dalam `sw.js`).
